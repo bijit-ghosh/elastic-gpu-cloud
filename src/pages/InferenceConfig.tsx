@@ -68,7 +68,7 @@ const InferenceConfig = () => {
               <CardContent className="p-6">
                 <div className="flex justify-between items-start">
                   <p className="text-sm text-gray-500 dark:text-gray-400">{metric.label}</p>
-                  <Badge variant={metric.trend.startsWith('+') ? 'success' : 'default'} className="text-xs">
+                  <Badge variant={metric.trend.startsWith('+') ? 'outline' : 'default'} className={`text-xs ${metric.trend.startsWith('+') ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : ''}`}>
                     {metric.trend}
                   </Badge>
                 </div>
@@ -109,8 +109,10 @@ const InferenceConfig = () => {
                     <TableCell className="font-medium">{endpoint.name}</TableCell>
                     <TableCell>
                       <Badge variant={
-                        endpoint.status === 'active' ? 'success' :
+                        endpoint.status === 'active' ? 'outline' :
                         endpoint.status === 'idle' ? 'secondary' : 'default'
+                      } className={
+                        endpoint.status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : ''
                       }>
                         {endpoint.status}
                       </Badge>

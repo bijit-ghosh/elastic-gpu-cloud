@@ -96,7 +96,9 @@ const Observability = () => {
                     <TableCell>
                       <Badge variant={
                         alert.severity === 'critical' ? 'destructive' :
-                        alert.severity === 'warning' ? 'warning' : 'secondary'
+                        alert.severity === 'warning' ? 'outline' : 'secondary'
+                      } className={
+                        alert.severity === 'warning' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' : ''
                       }>
                         {alert.severity}
                       </Badge>
