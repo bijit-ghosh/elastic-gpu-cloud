@@ -2,6 +2,7 @@
 import React from 'react';
 import HeroSection from '@/components/landing/HeroSection';
 import FeaturesSection from '@/components/landing/FeaturesSection';
+import IntegrationsSection from '@/components/landing/IntegrationsSection';
 import WorkloadSection from '@/components/landing/WorkloadSection';
 import TestimonialSection from '@/components/landing/TestimonialSection';
 import CTASection from '@/components/landing/CTASection';
@@ -15,6 +16,7 @@ const Index = () => {
       <main className="flex-grow">
         <HeroSection />
         <FeaturesSection />
+        <IntegrationsSection />
         <WorkloadSection />
         <TestimonialSection />
         <CTASection />
