@@ -137,16 +137,19 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Main Content */}
       <div className="lg:pl-64 flex flex-col flex-1">
         <div className="sticky top-0 z-10 flex items-center px-4 py-3 border-b bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
-          <SheetTrigger asChild className="lg:hidden">
-            <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
-              </svg>
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </SheetTrigger>
+          {/* Fixed: Wrapped SheetTrigger inside the Sheet component */}
+          <Sheet>
+            <SheetTrigger asChild className="lg:hidden">
+              <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </SheetTrigger>
+          </Sheet>
           
           <div className="ml-4 lg:ml-0">
             <h1 className="text-xl font-semibold">{title}</h1>
