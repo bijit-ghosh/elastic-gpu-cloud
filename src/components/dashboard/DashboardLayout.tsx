@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ActivitySquare, BarChart3, BrainCircuit, 
   CloudLightning, Code, Server, Settings, 
-  Plugs 
+  Plug // Changed from Plugs to Plug
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -39,7 +39,7 @@ const navItems: NavItem[] = [
     name: "Developer Tools",
     icon: Code,
     path: "/devtools",
-    description: "Jupyter, SDK, and developer resources"
+    description: "Developer resources"
   },
   {
     name: "Observability",
@@ -49,7 +49,7 @@ const navItems: NavItem[] = [
   },
   {
     name: "Integrations",
-    icon: Plugs,
+    icon: Plug, // Changed from Plugs to Plug
     path: "/integrations",
     description: "Connect and manage external tools"
   },
