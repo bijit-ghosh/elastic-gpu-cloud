@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ActivitySquare, BarChart3, BrainCircuit, 
-  CloudLightning, Code, Server, Settings 
+  CloudLightning, Code, Server, Settings, 
+  Plugs 
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -45,6 +46,12 @@ const navItems: NavItem[] = [
     icon: ActivitySquare,
     path: "/observability",
     description: "Deep insights and analytics"
+  },
+  {
+    name: "Integrations",
+    icon: Plugs,
+    path: "/integrations",
+    description: "Connect and manage external tools"
   },
   {
     name: "Settings",

@@ -10,6 +10,7 @@ import TrainingSubmission from "./pages/TrainingSubmission";
 import InferenceConfig from "./pages/InferenceConfig";
 import DevTools from "./pages/DevTools";
 import Observability from "./pages/Observability";
+import Integrations from "./pages/Integrations";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/inference" element={<InferenceConfig />} />
           <Route path="/devtools" element={<DevTools />} />
           <Route path="/observability" element={<Observability />} />
+          <Route path="/integrations" element={<Integrations />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
