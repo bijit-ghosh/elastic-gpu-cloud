@@ -1,9 +1,20 @@
-
 import React, { useState } from 'react';
-import { ExternalLink, CheckCircle, XCircle } from 'lucide-react';
+import { ExternalLink, CheckCircle, XCircle, X } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { useToast } from '@/components/ui/use-toast';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Toggle } from '@/components/ui/toggle';
 
@@ -15,6 +26,14 @@ type Integration = {
   status: 'enabled' | 'disabled';
   lastConnected: string | null;
   docsUrl: string;
+  configFields?: {
+    name: string;
+    type: 'text' | 'password' | 'textarea' | 'select';
+    label: string;
+    placeholder?: string;
+    options?: { value: string; label: string }[];
+    required?: boolean;
+  }[];
 };
 
 const integrations: Integration[] = [
@@ -26,6 +45,10 @@ const integrations: Integration[] = [
     status: 'disabled',
     lastConnected: null,
     docsUrl: 'https://mlflow.org/docs/latest/index.html',
+    configFields: [
+      { name: 'tracking_uri', type: 'text', label: 'Tracking URI', placeholder: 'http://localhost:5000', required: true },
+      { name: 'artifact_location', type: 'text', label: 'Artifact Location', placeholder: './mlruns' },
+    ],
   },
   {
     id: 's3',
@@ -35,6 +58,12 @@ const integrations: Integration[] = [
     status: 'disabled',
     lastConnected: null,
     docsUrl: 'https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html',
+    configFields: [
+      { name: 'bucket_name', type: 'text', label: 'Bucket Name', required: true },
+      { name: 'access_key', type: 'text', label: 'Access Key', required: true },
+      { name: 'secret_key', type: 'password', label: 'Secret Key', required: true },
+      { name: 'region', type: 'text', label: 'Region', placeholder: 'us-east-1' },
+    ],
   },
   {
     id: 'prometheus',
@@ -44,6 +73,10 @@ const integrations: Integration[] = [
     status: 'disabled',
     lastConnected: null,
     docsUrl: 'https://prometheus.io/docs/introduction/overview/',
+    configFields: [
+      { name: 'prometheus_url', type: 'text', label: 'Prometheus URL', placeholder: 'http://localhost:9090', required: true },
+      { name: 'grafana_url', type: 'text', label: 'Grafana URL', placeholder: 'http://localhost:3000' },
+    ],
   },
   {
     id: 'wandb',
@@ -53,6 +86,10 @@ const integrations: Integration[] = [
     status: 'disabled',
     lastConnected: null,
     docsUrl: 'https://docs.wandb.ai/',
+    configFields: [
+      { name: 'api_key', type: 'password', label: 'API Key', required: true },
+      { name: 'project', type: 'text', label: 'Project Name', required: true },
+    ],
   },
   {
     id: 'jupyterhub',
@@ -62,6 +99,11 @@ const integrations: Integration[] = [
     status: 'disabled',
     lastConnected: null,
     docsUrl: 'https://jupyterhub.readthedocs.io/',
+    configFields: [
+      { name: 'hub_url', type: 'text', label: 'Hub URL', required: true },
+      { name: 'admin_user', type: 'text', label: 'Admin Username' },
+      { name: 'admin_password', type: 'password', label: 'Admin Password' },
+    ],
   },
   {
     id: 'kubeflow',
@@ -71,6 +113,15 @@ const integrations: Integration[] = [
     status: 'disabled',
     lastConnected: null,
     docsUrl: 'https://www.kubeflow.org/docs/',
+    configFields: [
+      { name: 'orchestration_type', type: 'select', label: 'Orchestration Tool', options: [
+        { value: 'kubeflow', label: 'Kubeflow' },
+        { value: 'prefect', label: 'Prefect' },
+        { value: 'airflow', label: 'Airflow' },
+      ]},
+      { name: 'api_endpoint', type: 'text', label: 'API Endpoint', required: true },
+      { name: 'auth_token', type: 'password', label: 'Authentication Token', required: true },
+    ],
   },
   {
     id: 'vector-db',
@@ -80,6 +131,16 @@ const integrations: Integration[] = [
     status: 'disabled',
     lastConnected: null,
     docsUrl: 'https://weaviate.io/developers/weaviate',
+    configFields: [
+      { name: 'vector_db_type', type: 'select', label: 'Vector DB Type', options: [
+        { value: 'weaviate', label: 'Weaviate' },
+        { value: 'pinecone', label: 'Pinecone' },
+        { value: 'faiss', label: 'FAISS' },
+        { value: 'chroma', label: 'Chroma' },
+      ]},
+      { name: 'connection_string', type: 'text', label: 'Connection String', required: true },
+      { name: 'api_key', type: 'password', label: 'API Key' },
+    ],
   },
   {
     id: 'triton',
@@ -89,6 +150,15 @@ const integrations: Integration[] = [
     status: 'disabled',
     lastConnected: null,
     docsUrl: 'https://github.com/triton-inference-server/server',
+    configFields: [
+      { name: 'inference_type', type: 'select', label: 'Inference Server', options: [
+        { value: 'triton', label: 'Triton Inference Server' },
+        { value: 'ray', label: 'Ray Serve' },
+        { value: 'bentoml', label: 'BentoML' },
+      ]},
+      { name: 'server_url', type: 'text', label: 'Server URL', required: true },
+      { name: 'model_repository', type: 'text', label: 'Model Repository Path' },
+    ],
   },
   {
     id: 'vault',
@@ -98,6 +168,14 @@ const integrations: Integration[] = [
     status: 'disabled',
     lastConnected: null,
     docsUrl: 'https://www.vaultproject.io/docs',
+    configFields: [
+      { name: 'secrets_manager_type', type: 'select', label: 'Secrets Manager', options: [
+        { value: 'vault', label: 'HashiCorp Vault' },
+        { value: 'aws', label: 'AWS Secrets Manager' },
+      ]},
+      { name: 'endpoint', type: 'text', label: 'Endpoint URL', required: true },
+      { name: 'auth_token', type: 'password', label: 'Authentication Token', required: true },
+    ],
   },
   {
     id: 'github',
@@ -107,12 +185,26 @@ const integrations: Integration[] = [
     status: 'disabled',
     lastConnected: null,
     docsUrl: 'https://docs.github.com/en',
+    configFields: [
+      { name: 'git_provider', type: 'select', label: 'Git Provider', options: [
+        { value: 'github', label: 'GitHub' },
+        { value: 'gitlab', label: 'GitLab' },
+        { value: 'bitbucket', label: 'Bitbucket' },
+      ]},
+      { name: 'username', type: 'text', label: 'Username', required: true },
+      { name: 'access_token', type: 'password', label: 'Access Token', required: true },
+      { name: 'repository', type: 'text', label: 'Repository Name (optional)' },
+    ],
   },
 ];
 
 const Integrations = () => {
   const [activeIntegrations, setActiveIntegrations] = useState<Integration[]>(integrations);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
+  const [configOpen, setConfigOpen] = useState(false);
+  const [formValues, setFormValues] = useState<Record<string, string>>({});
+  const { toast } = useToast();
 
   const handleStatusToggle = (id: string) => {
     setActiveIntegrations(
@@ -128,6 +220,59 @@ const Integrations = () => {
         return integration;
       })
     );
+
+    const integration = activeIntegrations.find(i => i.id === id);
+    const newStatus = integration?.status === 'enabled' ? 'disabled' : 'enabled';
+    
+    toast({
+      title: `${integration?.name} ${newStatus}`,
+      description: newStatus === 'enabled' 
+        ? 'Integration has been successfully enabled' 
+        : 'Integration has been disabled',
+    });
+  };
+
+  const openConfigModal = (integration: Integration) => {
+    setSelectedIntegration(integration);
+    const initialValues: Record<string, string> = {};
+    integration.configFields?.forEach(field => {
+      initialValues[field.name] = '';
+    });
+    setFormValues(initialValues);
+    setConfigOpen(true);
+  };
+
+  const handleInputChange = (name: string, value: string) => {
+    setFormValues(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSaveConfig = () => {
+    const missingRequiredFields = selectedIntegration?.configFields
+      ?.filter(field => field.required && !formValues[field.name])
+      .map(field => field.label);
+
+    if (missingRequiredFields && missingRequiredFields.length > 0) {
+      toast({
+        title: "Missing required fields",
+        description: `Please fill in: ${missingRequiredFields.join(', ')}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Configuration saved",
+      description: `${selectedIntegration?.name} configuration has been updated successfully.`,
+    });
+
+    if (selectedIntegration && selectedIntegration.status === 'disabled') {
+      handleStatusToggle(selectedIntegration.id);
+    }
+
+    setConfigOpen(false);
   };
 
   return (
@@ -192,7 +337,7 @@ const Integrations = () => {
                 </div>
                 <p className="mb-6 text-sm text-muted-foreground">{integration.description}</p>
                 <div className="flex items-center justify-between">
-                  <Button variant="outline" size="sm">Configure</Button>
+                  <Button variant="outline" size="sm" onClick={() => openConfigModal(integration)}>Configure</Button>
                   <a 
                     href={integration.docsUrl} 
                     target="_blank" 
@@ -255,7 +400,7 @@ const Integrations = () => {
                   </td>
                   <td className="py-3 pr-4 text-right">
                     <div className="flex items-center justify-end space-x-2">
-                      <Button variant="outline" size="sm">Configure</Button>
+                      <Button variant="outline" size="sm" onClick={() => openConfigModal(integration)}>Configure</Button>
                       <a
                         href={integration.docsUrl}
                         target="_blank"
@@ -272,6 +417,60 @@ const Integrations = () => {
           </table>
         </div>
       )}
+
+      <Dialog open={configOpen} onOpenChange={setConfigOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Configure {selectedIntegration?.name}</DialogTitle>
+            <DialogDescription>
+              Set up connection details for {selectedIntegration?.category}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            {selectedIntegration?.configFields?.map((field) => (
+              <div key={field.name} className="grid gap-2">
+                <Label htmlFor={field.name}>
+                  {field.label} {field.required && <span className="text-red-500">*</span>}
+                </Label>
+                {field.type === 'select' ? (
+                  <select 
+                    id={field.name}
+                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    value={formValues[field.name]}
+                    onChange={(e) => handleInputChange(field.name, e.target.value)}
+                  >
+                    <option value="">Select {field.label}</option>
+                    {field.options?.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                ) : field.type === 'textarea' ? (
+                  <Textarea 
+                    id={field.name}
+                    placeholder={field.placeholder}
+                    value={formValues[field.name]}
+                    onChange={(e) => handleInputChange(field.name, e.target.value)}
+                  />
+                ) : (
+                  <Input 
+                    id={field.name}
+                    type={field.type}
+                    placeholder={field.placeholder}
+                    value={formValues[field.name]}
+                    onChange={(e) => handleInputChange(field.name, e.target.value)}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfigOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveConfig}>Save Configuration</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
