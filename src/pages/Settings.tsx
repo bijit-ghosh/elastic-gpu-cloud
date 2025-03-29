@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
@@ -10,11 +9,26 @@ import { useToast } from '@/components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
-import { Clock, Cloud, Globe, Keyboard, Lock, Shield, UserCog, Webhook } from 'lucide-react';
+import { 
+  Clock, Cloud, Globe, Keyboard, Lock, Shield, UserCog, Webhook,
+  Bell, MoonStar, Eye, Database, Network, LineChart, Languages, 
+  CalendarClock, Cpu, Monitor, FileJson, Wifi, Code, History
+} from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from '@/components/ui/form';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarTrigger } from '@/components/ui/menubar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const Settings = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [advancedMode, setAdvancedMode] = useState(false);
+  const [showDeprecated, setShowDeprecated] = useState(false);
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +49,38 @@ const Settings = () => {
       title="Settings"
       description="Configure your environment settings"
     >
+      <div className="flex justify-between mb-6">
+        <div>
+          
+        </div>
+        <div className="flex items-center gap-3">
+          <Switch
+            id="advanced-mode"
+            checked={advancedMode}
+            onCheckedChange={setAdvancedMode}
+          />
+          <Label htmlFor="advanced-mode">Advanced Mode</Label>
+          
+          <Button variant="outline" onClick={() => {
+            toast({
+              title: "Settings exported",
+              description: "Your settings have been exported as JSON.",
+            });
+          }}>
+            <FileJson className="mr-2 h-4 w-4" /> Export Settings
+          </Button>
+          
+          <Button variant="outline" onClick={() => {
+            toast({
+              title: "Settings imported",
+              description: "Your settings have been imported successfully.",
+            });
+          }}>
+            <FileJson className="mr-2 h-4 w-4" /> Import Settings
+          </Button>
+        </div>
+      </div>
+      
       <Tabs defaultValue="general" className="space-y-4">
         <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:w-[600px]">
           <TabsTrigger value="general">General</TabsTrigger>
@@ -60,6 +106,7 @@ const Settings = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <form onSubmit={handleSave} className="space-y-4">
+                
                 <div className="grid gap-2">
                   <label htmlFor="name" className="text-sm font-medium">Organization Name</label>
                   <Input id="name" defaultValue="Elastic GPU Research Team" />
@@ -80,6 +127,49 @@ const Settings = () => {
                   </Select>
                 </div>
                 
+                
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-2">
+                    <label htmlFor="language" className="text-sm font-medium">Display Language</label>
+                    <Select defaultValue="en-US">
+                      <SelectTrigger id="language">
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="en-US">English (US)</SelectItem>
+                        <SelectItem value="en-GB">English (UK)</SelectItem>
+                        <SelectItem value="es">Spanish</SelectItem>
+                        <SelectItem value="fr">French</SelectItem>
+                        <SelectItem value="de">German</SelectItem>
+                        <SelectItem value="ja">Japanese</SelectItem>
+                        <SelectItem value="zh-CN">Chinese (Simplified)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <label htmlFor="timezone" className="text-sm font-medium">Time Zone</label>
+                    <Select defaultValue="utc">
+                      <SelectTrigger id="timezone">
+                        <SelectValue placeholder="Select time zone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="utc">UTC (Coordinated Universal Time)</SelectItem>
+                        <SelectItem value="et">Eastern Time (ET)</SelectItem>
+                        <SelectItem value="ct">Central Time (CT)</SelectItem>
+                        <SelectItem value="mt">Mountain Time (MT)</SelectItem>
+                        <SelectItem value="pt">Pacific Time (PT)</SelectItem>
+                        <SelectItem value="jst">Japan Standard Time (JST)</SelectItem>
+                        <SelectItem value="cet">Central European Time (CET)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                <Separator className="my-4" />
+                
+                <h3 className="text-md font-medium mb-2">Resource Management</h3>
+                
                 <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
                     <label htmlFor="autoScaling" className="text-sm font-medium">Auto-scaling</label>
@@ -95,10 +185,69 @@ const Settings = () => {
                   </div>
                   <Switch id="costOptimization" defaultChecked />
                 </div>
-
+                
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <label htmlFor="resourceReservation" className="text-sm font-medium">Resource Reservation</label>
+                    <p className="text-sm text-muted-foreground">Pre-allocate resources for critical workloads</p>
+                  </div>
+                  <Switch id="resourceReservation" />
+                </div>
+                
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <label htmlFor="idleTimeout" className="text-sm font-medium">Idle Resource Timeout</label>
+                    <p className="text-sm text-muted-foreground">Automatically release idle resources</p>
+                  </div>
+                  <Select defaultValue="30">
+                    <SelectTrigger id="idleTimeout" className="w-32">
+                      <SelectValue placeholder="Select timeout" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10 minutes</SelectItem>
+                      <SelectItem value="30">30 minutes</SelectItem>
+                      <SelectItem value="60">1 hour</SelectItem>
+                      <SelectItem value="120">2 hours</SelectItem>
+                      <SelectItem value="never">Never</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
                 <div className="grid gap-2">
                   <label htmlFor="budget" className="text-sm font-medium">Monthly Budget Alert ($)</label>
                   <Input id="budget" type="number" defaultValue="5000" />
+                </div>
+                
+                <Separator className="my-4" />
+                
+                <h3 className="text-md font-medium mb-2">User Interface</h3>
+                
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <label htmlFor="welcomeScreen" className="text-sm font-medium">Show Welcome Screen</label>
+                    <p className="text-sm text-muted-foreground">Display welcome guide on startup</p>
+                  </div>
+                  <Switch id="welcomeScreen" defaultChecked />
+                </div>
+                
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <label htmlFor="tutorialTips" className="text-sm font-medium">Show Tutorial Tips</label>
+                    <p className="text-sm text-muted-foreground">Display helpful tips for new users</p>
+                  </div>
+                  <Switch id="tutorialTips" defaultChecked />
+                </div>
+                
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <label htmlFor="showDeprecated" className="text-sm font-medium">Show Deprecated Features</label>
+                    <p className="text-sm text-muted-foreground">Display features that will be removed in future versions</p>
+                  </div>
+                  <Switch 
+                    id="showDeprecated" 
+                    checked={showDeprecated}
+                    onCheckedChange={setShowDeprecated}
+                  />
                 </div>
                 
                 <Button type="submit" className="w-full" disabled={loading}>
@@ -107,6 +256,73 @@ const Settings = () => {
               </form>
             </CardContent>
           </Card>
+          
+          {advancedMode && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Database className="mr-2 h-5 w-5" />
+                  Data Management
+                </CardTitle>
+                <CardDescription>
+                  Configure data handling settings
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <label htmlFor="dataCompression" className="text-sm font-medium">Data Compression</label>
+                    <p className="text-sm text-muted-foreground">Compress data for storage</p>
+                  </div>
+                  <Switch id="dataCompression" defaultChecked />
+                </div>
+                
+                <div className="flex items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <label htmlFor="autoBackup" className="text-sm font-medium">Automatic Backups</label>
+                    <p className="text-sm text-muted-foreground">Regularly backup your data</p>
+                  </div>
+                  <Switch id="autoBackup" defaultChecked />
+                </div>
+                
+                <div className="grid gap-2">
+                  <label htmlFor="backupFrequency" className="text-sm font-medium">Backup Frequency</label>
+                  <Select defaultValue="daily">
+                    <SelectTrigger id="backupFrequency">
+                      <SelectValue placeholder="Select frequency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="hourly">Every hour</SelectItem>
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="grid gap-2">
+                  <label htmlFor="dataRetentionPeriod" className="text-sm font-medium">Data Retention Period</label>
+                  <Select defaultValue="90">
+                    <SelectTrigger id="dataRetentionPeriod">
+                      <SelectValue placeholder="Select period" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="30">30 days</SelectItem>
+                      <SelectItem value="60">60 days</SelectItem>
+                      <SelectItem value="90">90 days</SelectItem>
+                      <SelectItem value="180">180 days</SelectItem>
+                      <SelectItem value="365">1 year</SelectItem>
+                      <SelectItem value="forever">Forever</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <Button variant="outline" className="w-full">
+                  Schedule Data Cleanup
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
         
         <TabsContent value="api" className="space-y-4">
@@ -121,6 +337,7 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              
               <div className="rounded-md bg-muted p-4">
                 <p className="text-sm font-medium">Your API Key</p>
                 <div className="mt-2 flex items-center gap-2">
@@ -167,7 +384,129 @@ const Settings = () => {
                 </div>
               </div>
               
+              
+              <Separator />
+              
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium">API Key Permissions</h3>
+                <div className="grid gap-3">
+                  <div className="flex items-start space-x-3">
+                    <Checkbox id="read-access" defaultChecked />
+                    <div>
+                      <label htmlFor="read-access" className="text-sm font-medium">Read Access</label>
+                      <p className="text-xs text-muted-foreground">Allows reading data from the API</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-3">
+                    <Checkbox id="write-access" defaultChecked />
+                    <div>
+                      <label htmlFor="write-access" className="text-sm font-medium">Write Access</label>
+                      <p className="text-xs text-muted-foreground">Allows creating and updating data via the API</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-3">
+                    <Checkbox id="delete-access" />
+                    <div>
+                      <label htmlFor="delete-access" className="text-sm font-medium">Delete Access</label>
+                      <p className="text-xs text-muted-foreground">Allows deleting data via the API</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start space-x-3">
+                    <Checkbox id="admin-access" />
+                    <div>
+                      <label htmlFor="admin-access" className="text-sm font-medium">Admin Access</label>
+                      <p className="text-xs text-muted-foreground">Full administrative access to all API endpoints</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium mb-2">API Usage Limits</h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <label htmlFor="rate-limit" className="text-sm font-medium">Rate Limit (requests per minute)</label>
+                      <span className="text-sm text-muted-foreground">200 rpm</span>
+                    </div>
+                    <Slider defaultValue={[200]} min={10} max={1000} step={10} />
+                  </div>
+                  
+                  <div>
+                    <div className="flex justify-between mb-1">
+                      <label htmlFor="concurrent-requests" className="text-sm font-medium">Max Concurrent Requests</label>
+                      <span className="text-sm text-muted-foreground">50</span>
+                    </div>
+                    <Slider defaultValue={[50]} min={5} max={200} step={5} />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-3 mt-4">
+                <h3 className="text-sm font-medium">API Webhooks</h3>
+                
+                <div className="border rounded-lg p-4 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-sm font-medium">Job Completion Webhook</h4>
+                    <Switch id="job-webhook" defaultChecked />
+                  </div>
+                  <Input placeholder="https://your-server.com/webhooks/job-completed" />
+                  <div className="flex items-center space-x-2">
+                    <Checkbox id="include-logs" />
+                    <label htmlFor="include-logs" className="text-sm">Include logs in payload</label>
+                  </div>
+                </div>
+                
+                <div className="border rounded-lg p-4 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-sm font-medium">Error Alert Webhook</h4>
+                    <Switch id="error-webhook" defaultChecked />
+                  </div>
+                  <Input placeholder="https://your-server.com/webhooks/error-alert" />
+                  <div className="flex items-center space-x-2">
+                    <Checkbox id="include-stacktrace" />
+                    <label htmlFor="include-stacktrace" className="text-sm">Include stack trace in payload</label>
+                  </div>
+                </div>
+                
+                <Button variant="outline" size="sm" className="mt-2">
+                  <Webhook className="h-4 w-4 mr-2" /> Add New Webhook
+                </Button>
+              </div>
+              
               <Button variant="outline">Generate New API Key</Button>
+              
+              {advancedMode && (
+                <div className="mt-4 pt-4 border-t">
+                  <h3 className="text-sm font-medium mb-3">Advanced API Settings</h3>
+                  
+                  <div className="space-y-3">
+                    <div className="grid gap-2">
+                      <label htmlFor="timeout" className="text-sm font-medium">Request Timeout (seconds)</label>
+                      <Input id="timeout" type="number" defaultValue="30" />
+                    </div>
+                    
+                    <div className="grid gap-2">
+                      <label htmlFor="retry-attempts" className="text-sm font-medium">Max Retry Attempts</label>
+                      <Input id="retry-attempts" type="number" defaultValue="3" />
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">JSON Pretty Print</p>
+                        <p className="text-xs text-muted-foreground">Format JSON responses for readability</p>
+                      </div>
+                      <Switch id="json-pretty" />
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -176,7 +515,7 @@ const Settings = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Clock className="mr-2 h-5 w-5" />
+                <Bell className="mr-2 h-5 w-5" />
                 Notification Settings
               </CardTitle>
               <CardDescription>
@@ -184,6 +523,7 @@ const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <label className="text-sm font-medium">Job Completion</label>
@@ -205,6 +545,7 @@ const Settings = () => {
                 </div>
                 <Switch defaultChecked />
               </div>
+              
               
               <Separator className="my-4" />
               
@@ -234,317 +575,191 @@ const Settings = () => {
                   <Switch />
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="security" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Shield className="mr-2 h-5 w-5" />
-                Security Settings
-              </CardTitle>
-              <CardDescription>
-                Configure security options for your account
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <label className="text-sm font-medium">Two-Factor Authentication</label>
-                  <p className="text-sm text-muted-foreground">Enable 2FA for your account</p>
+              
+              
+              <Separator className="my-4" />
+              
+              <h3 className="text-sm font-medium mb-3">Notification Types</h3>
+              
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <label className="text-sm font-medium">Job Completion</label>
+                    <p className="text-sm text-muted-foreground">Notify when a job completes</p>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        All channels <Bell className="ml-2 h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem className="flex items-center">
+                        <Checkbox id="job-email" defaultChecked className="mr-2" />
+                        <label htmlFor="job-email">Email</label>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center">
+                        <Checkbox id="job-slack" defaultChecked className="mr-2" />
+                        <label htmlFor="job-slack">Slack</label>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center">
+                        <Checkbox id="job-push" className="mr-2" />
+                        <label htmlFor="job-push">Push</label>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-                <Switch />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <label className="text-sm font-medium">Session Timeout</label>
-                  <p className="text-sm text-muted-foreground">Automatically log out after inactivity</p>
+                
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <label className="text-sm font-medium">Job Failure</label>
+                    <p className="text-sm text-muted-foreground">Notify when a job fails</p>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        All channels <Bell className="ml-2 h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem className="flex items-center">
+                        <Checkbox id="failure-email" defaultChecked className="mr-2" />
+                        <label htmlFor="failure-email">Email</label>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center">
+                        <Checkbox id="failure-slack" defaultChecked className="mr-2" />
+                        <label htmlFor="failure-slack">Slack</label>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center">
+                        <Checkbox id="failure-push" defaultChecked className="mr-2" />
+                        <label htmlFor="failure-push">Push</label>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-                <Switch defaultChecked />
-              </div>
-              <div className="grid gap-2 pt-4">
-                <label htmlFor="timeout" className="text-sm font-medium">Timeout Duration (minutes)</label>
-                <Input id="timeout" type="number" defaultValue="30" className="w-28" />
+                
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <label className="text-sm font-medium">Resource Usage</label>
+                    <p className="text-sm text-muted-foreground">Notify on high resource usage</p>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        All channels <Bell className="ml-2 h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem className="flex items-center">
+                        <Checkbox id="resource-email" defaultChecked className="mr-2" />
+                        <label htmlFor="resource-email">Email</label>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center">
+                        <Checkbox id="resource-slack" defaultChecked className="mr-2" />
+                        <label htmlFor="resource-slack">Slack</label>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center">
+                        <Checkbox id="resource-push" className="mr-2" />
+                        <label htmlFor="resource-push">Push</label>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <label className="text-sm font-medium">Security Alerts</label>
+                    <p className="text-sm text-muted-foreground">Notify about security-related events</p>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        All channels <Bell className="ml-2 h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem className="flex items-center">
+                        <Checkbox id="security-email" defaultChecked className="mr-2" />
+                        <label htmlFor="security-email">Email</label>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center">
+                        <Checkbox id="security-slack" defaultChecked className="mr-2" />
+                        <label htmlFor="security-slack">Slack</label>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center">
+                        <Checkbox id="security-push" defaultChecked className="mr-2" />
+                        <label htmlFor="security-push">Push</label>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
               
               <Separator className="my-4" />
               
+              <h3 className="text-sm font-medium mb-3">Notification Schedule</h3>
+              
               <div className="space-y-3">
-                <h3 className="text-sm font-medium">Advanced Security</h3>
-                
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <label className="text-sm font-medium">SAML Single Sign-On</label>
-                    <p className="text-sm text-muted-foreground">Enable enterprise SSO authentication</p>
+                    <label className="text-sm font-medium">Quiet Hours</label>
+                    <p className="text-sm text-muted-foreground">Silence non-critical notifications</p>
                   </div>
-                  <Switch />
+                  <Switch id="quiet-hours" />
                 </div>
                 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Login History</label>
-                    <p className="text-sm text-muted-foreground">Track all login attempts</p>
-                  </div>
-                  <Button variant="outline" size="sm">View History</Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="appearance" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Appearance Settings</CardTitle>
-              <CardDescription>Customize the interface appearance</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Theme Mode</h3>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Button variant="outline" className="justify-start text-sm px-3">
-                      Light
-                    </Button>
-                    <Button variant="outline" className="justify-start text-sm px-3">
-                      Dark
-                    </Button>
-                    <Button variant="secondary" className="justify-start text-sm px-3">
-                      System
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <label className="text-sm font-medium">Density</label>
-                    <span className="text-sm text-muted-foreground">Comfortable</span>
-                  </div>
-                  <Slider defaultValue={[50]} max={100} step={25} className="w-full" />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Compact</span>
-                    <span>Comfortable</span>
-                    <span>Spacious</span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Animations</label>
-                    <p className="text-sm text-muted-foreground">Enable UI animations</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                
-                <div className="space-y-2">
-                  <label htmlFor="fontSize" className="text-sm font-medium">Font Size</label>
-                  <Select defaultValue="medium">
-                    <SelectTrigger id="fontSize">
-                      <SelectValue placeholder="Select font size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="small">Small</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="large">Large</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="integrations" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Cloud className="mr-2 h-5 w-5" />
-                External Integrations
-              </CardTitle>
-              <CardDescription>Connect with external platforms and services</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between border rounded-lg p-4">
-                <div className="flex items-center gap-4">
-                  <div className="bg-blue-100 p-2 rounded-full">
-                    <svg className="w-6 h-6 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-medium">GitHub</h3>
-                    <p className="text-sm text-muted-foreground">Integrate with your GitHub repositories</p>
-                  </div>
-                </div>
-                <Button variant="outline">Connect</Button>
-              </div>
-              
-              <div className="flex items-center justify-between border rounded-lg p-4">
-                <div className="flex items-center gap-4">
-                  <div className="bg-purple-100 p-2 rounded-full">
-                    <svg className="w-6 h-6 text-purple-600" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19.82 4.74c-.58-.94-1.35-1.77-2.22-2.42-2.17-1.6-5-1.92-7.51-.84-1.62.7-3.03 2.03-3.92 3.6-.91 1.61-1.29 3.59-1.03 5.43.05.39.13.76.22 1.12 0 .03.02.06.04.09-2.39.7-4.86 1.76-5.98 4.69-.32.84-.41 1.78-.24 2.67.33 1.72 1.64 3.32 3.36 3.82 1.84.53 5.21.03 6.88-2.16.23-.31.45-.66.62-1.02.59-1.25.59-2.99.58-3.87v-1.88c0-.28.06-.53.16-.77l-.03-.04c.36.12.72.22 1.1.29.34.06.67.1 1.01.1 1.07 0 2.12-.32 2.99-.89 1.09-.7 1.94-1.76 2.35-2.97.41-1.2.41-2.51-.01-3.71zm-1.95 3.1c-.28.82-.85 1.52-1.58 1.98-.61.4-1.33.57-2.05.52-.73-.06-1.43-.32-2.04-.74-.28-.19-.52-.43-.75-.69-.14-.16-.01-.4.2-.35.21.05.42.08.65.08 1.02 0 1.96-.51 2.51-1.37.25-.39.18-.88-.03-1.24-.93-1.6-3.29-1.64-4.24-.05-.47.79-.51 1.76-.13 2.58.06.15-.16.18-.19.05-.25-.93-.19-2.14.35-2.9.46-.64 1.18-1.06 1.97-1.18.79-.11 1.63.05 2.28.5.65.44 1.13 1.13 1.35 1.88.21.74.13 1.56-.15 2.27-.01.05-.01.1-.02.16-.01.2-.16.33-.33.33-.17 0-.32-.13-.33-.33 0-.02 0-.03 0-.05-.24-.79-.22-1.63-.06-2.4.11-.55-.39-1.03-.94-.92-.22.04-.41.16-.54.33-.34.46-.47 1.04-.41 1.58.05.51.28.96.64 1.28.36.31.82.5 1.31.53.61.04 1.22-.13 1.72-.47.5-.34.9-.83 1.12-1.39.22-.56.25-1.2.07-1.78-.18-.59-.54-1.11-1.02-1.5-.48-.4-1.07-.65-1.67-.7-.61-.06-1.24.07-1.77.35-.53.27-.99.7-1.3 1.22-.3.52-.46 1.13-.44 1.72.01.6.21 1.19.55 1.68.09.13.01.29-.13.35-.2.08-.32-.02-.44-.19-.33-.45-.53-.98-.6-1.52-.06-.56.01-1.14.2-1.67.19-.53.5-1.03.9-1.42.4-.39.88-.7 1.4-.9 1.06-.39 2.32-.35 3.36.13.51.24.96.59 1.32 1.01.19.23.36.46.5.72.28.51.44 1.1.46 1.69.02.59-.11 1.19-.37 1.73zm-5.92 9.12c.02.01.05.02.07.03.41-.35.79-.72 1.13-1.11.62-.73 1.14-1.54 1.52-2.4.44-1 .75-2.05.92-3.13.07-.42.12-.86.14-1.29.01-.31-.24-.44-.47-.22-.14.13-.28.26-.44.39-.38.32-.8.59-1.24.8-1.43.68-3.2.51-4.47-.44-.14-.1-.27-.21-.39-.33-.13-.12-.35-.06-.39.12-.06.31-.1.63-.11.94-.04 1.46.08 2.96.38 4.4.08.41.19.82.32 1.22.08.25.17.51.27.75.04.09.09.18.13.27.02.04.08.15.08.14-.01-.02-.02-.02-.04-.03.03.04.07.06.11.09z"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Slack</h3>
-                    <p className="text-sm text-muted-foreground">Get notified on Slack</p>
-                  </div>
-                </div>
-                <Button variant="outline">Connect</Button>
-              </div>
-              
-              <div className="flex items-center justify-between border rounded-lg p-4">
-                <div className="flex items-center gap-4">
-                  <div className="bg-orange-100 p-2 rounded-full">
-                    <svg className="w-6 h-6 text-orange-600" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-1.218 19h-1.782v-8h1.782v8zm-4.782-8h-1.782v8h1.782v-8zm2.782-2h-2.563v1.5h2.563v-1.5zm4.5 10h1.782v-8h-1.782v8zm2.782-10h-2.563v1.5h2.563v-1.5z"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-medium">AWS</h3>
-                    <p className="text-sm text-muted-foreground">Connect your AWS account</p>
-                  </div>
-                </div>
-                <Button variant="outline">Connect</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="permissions" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <UserCog className="mr-2 h-5 w-5" />
-                User Permissions
-              </CardTitle>
-              <CardDescription>Manage user roles and permissions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="border rounded-lg divide-y">
-                  <div className="p-4 flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium">Administrator</h3>
-                      <p className="text-sm text-muted-foreground">Full access to all settings</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">Edit</Button>
-                      <Button variant="outline" size="sm">Users (3)</Button>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium">Developer</h3>
-                      <p className="text-sm text-muted-foreground">Can create and manage jobs</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">Edit</Button>
-                      <Button variant="outline" size="sm">Users (8)</Button>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium">Viewer</h3>
-                      <p className="text-sm text-muted-foreground">Read-only access</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm">Edit</Button>
-                      <Button variant="outline" size="sm">Users (12)</Button>
-                    </div>
-                  </div>
-                </div>
-                
-                <Button className="w-full">Add New Role</Button>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="advanced" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Keyboard className="mr-2 h-5 w-5" />
-                Advanced Settings
-              </CardTitle>
-              <CardDescription>Configure advanced options for your environment</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Developer Mode</label>
-                    <p className="text-sm text-muted-foreground">Enable advanced debugging tools</p>
-                  </div>
-                  <Switch />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Log Verbosity</label>
-                    <p className="text-sm text-muted-foreground">Set the detail level for logs</p>
-                  </div>
-                  <Select defaultValue="info">
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Select level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="error">Error</SelectItem>
-                      <SelectItem value="warning">Warning</SelectItem>
-                      <SelectItem value="info">Info</SelectItem>
-                      <SelectItem value="debug">Debug</SelectItem>
-                      <SelectItem value="trace">Trace</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <Separator className="my-2" />
-                
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Data Management</h3>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <label className="text-sm font-medium">Data Retention Period</label>
-                      <p className="text-sm text-muted-foreground">How long to keep historical data</p>
-                    </div>
-                    <Select defaultValue="90">
-                      <SelectTrigger className="w-32">
-                        <SelectValue placeholder="Select days" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <label htmlFor="quiet-start" className="text-sm font-medium">Start Time</label>
+                    <Select defaultValue="22:00">
+                      <SelectTrigger id="quiet-start">
+                        <SelectValue placeholder="Select time" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="30">30 days</SelectItem>
-                        <SelectItem value="60">60 days</SelectItem>
-                        <SelectItem value="90">90 days</SelectItem>
-                        <SelectItem value="180">180 days</SelectItem>
-                        <SelectItem value="365">1 year</SelectItem>
+                        <SelectItem value="20:00">8:00 PM</SelectItem>
+                        <SelectItem value="21:00">9:00 PM</SelectItem>
+                        <SelectItem value="22:00">10:00 PM</SelectItem>
+                        <SelectItem value="23:00">11:00 PM</SelectItem>
+                        <SelectItem value="00:00">12:00 AM</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <label htmlFor="quiet-end" className="text-sm font-medium">End Time</label>
+                    <Select defaultValue="07:00">
+                      <SelectTrigger id="quiet-end">
+                        <SelectValue placeholder="Select time" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="05:00">5:00 AM</SelectItem>
+                        <SelectItem value="06:00">6:00 AM</SelectItem>
+                        <SelectItem value="07:00">7:00 AM</SelectItem>
+                        <SelectItem value="08:00">8:00 AM</SelectItem>
+                        <SelectItem value="09:00">9:00 AM</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <label htmlFor="customEndpoint" className="text-sm font-medium">Custom API Endpoint</label>
-                  <Input id="customEndpoint" placeholder="https://api.yourdomain.com/v1" />
-                  <p className="text-xs text-muted-foreground">Leave empty to use the default endpoint</p>
+                  <label className="text-sm font-medium">Active Days</label>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" className="flex-1">Mon</Button>
+                    <Button variant="outline" size="sm" className="flex-1">Tue</Button>
+                    <Button variant="outline" size="sm" className="flex-1">Wed</Button>
+                    <Button variant="outline" size="sm" className="flex-1">Thu</Button>
+                    <Button variant="outline" size="sm" className="flex-1">Fri</Button>
+                    <Button variant="secondary" size="sm" className="flex-1">Sat</Button>
+                    <Button variant="secondary" size="sm" className="flex-1">Sun</Button>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-2">
-              <Button variant="destructive" className="w-full">Reset All Settings</Button>
-              <p className="text-xs text-muted-foreground text-center">This action cannot be undone</p>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </DashboardLayout>
-  );
-};
-
-export default Settings;
+              
+              {advancedMode && (
+                <>
+                  <Separator className="my-4" />
+                  
+                  <h3 className="text-sm font-medium mb-3">Summary Reports</h3>
+                  
+                  <div className="space-y-3">
