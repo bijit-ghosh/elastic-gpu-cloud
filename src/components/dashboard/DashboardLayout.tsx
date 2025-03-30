@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
   ActivitySquare, BarChart3, BrainCircuit, 
   CloudLightning, Code, Server, Settings, 
-  Plug // Changed from Plugs to Plug
+  Plug
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -49,7 +49,7 @@ const navItems: NavItem[] = [
   },
   {
     name: "Integrations",
-    icon: Plug, // Changed from Plugs to Plug
+    icon: Plug,
     path: "/integrations",
     description: "Connect and manage external tools"
   },
@@ -137,7 +137,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Main Content */}
       <div className="lg:pl-64 flex flex-col flex-1">
         <div className="sticky top-0 z-10 flex items-center px-4 py-3 border-b bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm">
-          {/* Fixed: Wrapped SheetTrigger inside the Sheet component */}
           <Sheet>
             <SheetTrigger asChild className="lg:hidden">
               <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)}>

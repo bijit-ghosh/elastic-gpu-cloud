@@ -52,8 +52,7 @@ const Settings = () => {
     { id: 2, action: 'Settings Updated', user: 'admin@example.com', timestamp: '2023-10-10 09:15:22' },
     { id: 3, action: 'User Added', user: 'admin@example.com', timestamp: '2023-09-28 11:47:03' },
   ]);
-  
-  // Form schema for general settings
+
   const formSchema = z.object({
     siteName: z.string().min(2, {
       message: "Site name must be at least 2 characters.",
@@ -63,7 +62,6 @@ const Settings = () => {
     dateFormat: z.string(),
   });
 
-  // Form for general settings
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -74,14 +72,12 @@ const Settings = () => {
     },
   });
 
-  // Form schema for API settings
   const apiFormSchema = z.object({
     rateLimit: z.number().min(10).max(1000),
     timeout: z.number().min(1).max(60),
     retries: z.number().min(0).max(5),
   });
 
-  // Form for API settings
   const apiForm = useForm<z.infer<typeof apiFormSchema>>({
     resolver: zodResolver(apiFormSchema),
     defaultValues: {
@@ -91,7 +87,6 @@ const Settings = () => {
     },
   });
 
-  // Handle form submission
   function onSubmit(values: z.infer<typeof formSchema>) {
     toast({
       title: "Settings updated",
@@ -99,7 +94,6 @@ const Settings = () => {
     });
   }
 
-  // Function to toggle notification settings
   const toggleNotification = (key: string) => {
     setNotifications(prev => ({
       ...prev,
@@ -107,7 +101,6 @@ const Settings = () => {
     }));
   };
 
-  // Function to create a new API key
   const createNewApiKey = () => {
     const newKey = {
       id: apiKeys.length + 1,
@@ -123,7 +116,6 @@ const Settings = () => {
     });
   };
 
-  // Function to revoke an API key
   const revokeApiKey = (id: number) => {
     setApiKeys(apiKeys.map(key => 
       key.id === id ? { ...key, active: false } : key
@@ -185,7 +177,6 @@ const Settings = () => {
             </TabsTrigger>
           </TabsList>
           
-          {/* General Settings */}
           <TabsContent value="general">
             <Card>
               <CardHeader>
@@ -342,7 +333,6 @@ const Settings = () => {
             </Card>
           </TabsContent>
           
-          {/* API Access Settings */}
           <TabsContent value="api">
             <Card>
               <CardHeader>
@@ -509,7 +499,6 @@ const Settings = () => {
             </Card>
           </TabsContent>
           
-          {/* Notifications Settings */}
           <TabsContent value="notifications">
             <Card>
               <CardHeader>
@@ -678,7 +667,6 @@ const Settings = () => {
             </Card>
           </TabsContent>
           
-          {/* Security Settings */}
           <TabsContent value="security">
             <Card>
               <CardHeader>
@@ -786,7 +774,6 @@ const Settings = () => {
             </Card>
           </TabsContent>
           
-          {/* Appearance Settings */}
           <TabsContent value="appearance">
             <Card>
               <CardHeader>
@@ -850,3 +837,4 @@ const Settings = () => {
                           <Label htmlFor="layout-default">Default</Label>
                         </div>
                         <div className="h-20 bg-muted
+"
