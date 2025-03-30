@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { 
   Clock, Cloud, Globe, Keyboard, Lock, Shield, UserCog, Webhook,
   Bell, MoonStar, Eye, Database, Network, LineChart, Languages, 
-  CalendarClock, Cpu, Monitor, FileJson, Wifi, Code, History
+  CalendarClock, Cpu, Monitor, FileJson, Wifi, Code, History, Plug
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
