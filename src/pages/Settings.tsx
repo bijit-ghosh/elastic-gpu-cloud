@@ -1,1702 +1,1291 @@
 
 import React, { useState } from 'react';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { useToast } from '@/components/ui/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
+import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import { toast } from '@/hooks/use-toast';
 import { 
   Clock, Cloud, Globe, Keyboard, Lock, Shield, UserCog, Webhook,
   Bell, MoonStar, Eye, Database, Network, LineChart, Languages, 
-  CalendarClock, Cpu, Monitor, FileJson, Wifi, Code, History, Plug
+  CalendarClock, Cpu, Monitor, FileJson, Wifi, Code, History, Plug,
+  Cog, Timer, TimerReset, ShieldCheck, ShieldAlert, Key, KeyRound,
+  Settings as SettingsIcon, MonitorDot, MonitorOff, WifiOff, Info
 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessage } from '@/components/ui/form';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarTrigger } from '@/components/ui/menubar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Slider } from '@/components/ui/slider';
+import { Progress } from '@/components/ui/progress';
 
 const Settings = () => {
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('general');
   const [advancedMode, setAdvancedMode] = useState(false);
-  const [showDeprecated, setShowDeprecated] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [notifications, setNotifications] = useState({
+    email: true,
+    push: false,
+    sms: false,
+    inApp: true,
+    alertCritical: true,
+    dailyReport: true,
+    weeklyDigest: false,
+    maintenanceAlerts: true,
+    usageAlerts: true
+  });
+  const [quotaUsage, setQuotaUsage] = useState(68);
+  const [apiKeys, setApiKeys] = useState([
+    { id: 1, name: 'Production', key: 'sk-prod-faketpkfakekey78fake', active: true, created: '2023-05-12' },
+    { id: 2, name: 'Development', key: 'sk-dev-faketpkfakekey56fake', active: true, created: '2023-06-03' },
+  ]);
+  const [logs, setLogs] = useState([
+    { id: 1, action: 'API Key Created', user: 'admin@example.com', timestamp: '2023-10-15 14:32:45' },
+    { id: 2, action: 'Settings Updated', user: 'admin@example.com', timestamp: '2023-10-10 09:15:22' },
+    { id: 3, action: 'User Added', user: 'admin@example.com', timestamp: '2023-09-28 11:47:03' },
+  ]);
+  
+  // Form schema for general settings
+  const formSchema = z.object({
+    siteName: z.string().min(2, {
+      message: "Site name must be at least 2 characters.",
+    }),
+    language: z.string(),
+    timezone: z.string(),
+    dateFormat: z.string(),
+  });
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-      toast({
-        title: "Settings saved",
-        description: "Your settings have been updated successfully.",
-      });
-    }, 1000);
+  // Form for general settings
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      siteName: "MLOps Platform",
+      language: "en-US",
+      timezone: "UTC",
+      dateFormat: "MMM DD, YYYY",
+    },
+  });
+
+  // Form schema for API settings
+  const apiFormSchema = z.object({
+    rateLimit: z.number().min(10).max(1000),
+    timeout: z.number().min(1).max(60),
+    retries: z.number().min(0).max(5),
+  });
+
+  // Form for API settings
+  const apiForm = useForm<z.infer<typeof apiFormSchema>>({
+    resolver: zodResolver(apiFormSchema),
+    defaultValues: {
+      rateLimit: 100,
+      timeout: 30,
+      retries: 3,
+    },
+  });
+
+  // Handle form submission
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    toast({
+      title: "Settings updated",
+      description: "Your settings have been saved successfully.",
+    });
+  }
+
+  // Function to toggle notification settings
+  const toggleNotification = (key: string) => {
+    setNotifications(prev => ({
+      ...prev,
+      [key]: !prev[key as keyof typeof notifications]
+    }));
+  };
+
+  // Function to create a new API key
+  const createNewApiKey = () => {
+    const newKey = {
+      id: apiKeys.length + 1,
+      name: `New Key ${apiKeys.length + 1}`,
+      key: `sk-new-${Math.random().toString(36).substring(2, 15)}`,
+      active: true,
+      created: new Date().toISOString().split('T')[0]
+    };
+    setApiKeys([...apiKeys, newKey]);
+    toast({
+      title: "API Key Created",
+      description: "New API Key has been generated successfully.",
+    });
+  };
+
+  // Function to revoke an API key
+  const revokeApiKey = (id: number) => {
+    setApiKeys(apiKeys.map(key => 
+      key.id === id ? { ...key, active: false } : key
+    ));
+    toast({
+      title: "API Key Revoked",
+      description: "The API Key has been revoked successfully.",
+      variant: "destructive",
+    });
   };
 
   return (
-    <DashboardLayout
-      title="Settings"
-      description="Configure your environment settings"
-    >
-      <div className="flex justify-between mb-6">
-        <div>
-          
+    <DashboardLayout>
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
+          <div className="flex items-center space-x-2">
+            <Switch 
+              checked={advancedMode} 
+              onCheckedChange={setAdvancedMode} 
+              id="advanced-mode"
+            />
+            <Label htmlFor="advanced-mode">Advanced Mode</Label>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Switch
-            id="advanced-mode"
-            checked={advancedMode}
-            onCheckedChange={setAdvancedMode}
-          />
-          <Label htmlFor="advanced-mode">Advanced Mode</Label>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2">
+            <TabsTrigger value="general" className="flex items-center gap-2">
+              <Cog size={16} />
+              <span className="hidden md:inline">General</span>
+            </TabsTrigger>
+            <TabsTrigger value="api" className="flex items-center gap-2">
+              <Code size={16} />
+              <span className="hidden md:inline">API Access</span>
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="flex items-center gap-2">
+              <Bell size={16} />
+              <span className="hidden md:inline">Notifications</span>
+            </TabsTrigger>
+            <TabsTrigger value="security" className="flex items-center gap-2">
+              <Shield size={16} />
+              <span className="hidden md:inline">Security</span>
+            </TabsTrigger>
+            <TabsTrigger value="appearance" className="flex items-center gap-2">
+              <Eye size={16} />
+              <span className="hidden md:inline">Appearance</span>
+            </TabsTrigger>
+            <TabsTrigger value="integrations" className="flex items-center gap-2">
+              <Plug size={16} />
+              <span className="hidden md:inline">Integrations</span>
+            </TabsTrigger>
+            <TabsTrigger value="permissions" className="flex items-center gap-2">
+              <UserCog size={16} />
+              <span className="hidden md:inline">Permissions</span>
+            </TabsTrigger>
+            <TabsTrigger value="advanced" className="flex items-center gap-2">
+              <Cpu size={16} />
+              <span className="hidden md:inline">Advanced</span>
+            </TabsTrigger>
+          </TabsList>
           
-          <Button variant="outline" onClick={() => {
-            toast({
-              title: "Settings exported",
-              description: "Your settings have been exported as JSON.",
-            });
-          }}>
-            <FileJson className="mr-2 h-4 w-4" /> Export Settings
-          </Button>
-          
-          <Button variant="outline" onClick={() => {
-            toast({
-              title: "Settings imported",
-              description: "Your settings have been imported successfully.",
-            });
-          }}>
-            <FileJson className="mr-2 h-4 w-4" /> Import Settings
-          </Button>
-        </div>
-      </div>
-      
-      <Tabs defaultValue="general" className="space-y-4">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:w-[600px]">
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="api">API Access</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="appearance">Appearance</TabsTrigger>
-          <TabsTrigger value="integrations">Integrations</TabsTrigger>
-          <TabsTrigger value="permissions">Permissions</TabsTrigger>
-          <TabsTrigger value="advanced">Advanced</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="general" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Globe className="mr-2 h-5 w-5" />
-                General Settings
-              </CardTitle>
-              <CardDescription>
-                Configure general settings for your Elastic GPU environment
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <form onSubmit={handleSave} className="space-y-4">
-                
-                <div className="grid gap-2">
-                  <label htmlFor="name" className="text-sm font-medium">Organization Name</label>
-                  <Input id="name" defaultValue="Elastic GPU Research Team" />
-                </div>
-                <div className="grid gap-2">
-                  <label htmlFor="region" className="text-sm font-medium">Default Region</label>
-                  <Select defaultValue="us-west-1">
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a region" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="us-west-1">US West (N. California)</SelectItem>
-                      <SelectItem value="us-east-1">US East (N. Virginia)</SelectItem>
-                      <SelectItem value="eu-west-1">EU (Ireland)</SelectItem>
-                      <SelectItem value="ap-northeast-1">Asia Pacific (Tokyo)</SelectItem>
-                      <SelectItem value="ap-southeast-2">Asia Pacific (Sydney)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="grid gap-2">
-                    <label htmlFor="language" className="text-sm font-medium">Display Language</label>
-                    <Select defaultValue="en-US">
-                      <SelectTrigger id="language">
-                        <SelectValue placeholder="Select language" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="en-US">English (US)</SelectItem>
-                        <SelectItem value="en-GB">English (UK)</SelectItem>
-                        <SelectItem value="es">Spanish</SelectItem>
-                        <SelectItem value="fr">French</SelectItem>
-                        <SelectItem value="de">German</SelectItem>
-                        <SelectItem value="ja">Japanese</SelectItem>
-                        <SelectItem value="zh-CN">Chinese (Simplified)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <label htmlFor="timezone" className="text-sm font-medium">Time Zone</label>
-                    <Select defaultValue="utc">
-                      <SelectTrigger id="timezone">
-                        <SelectValue placeholder="Select time zone" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="utc">UTC (Coordinated Universal Time)</SelectItem>
-                        <SelectItem value="et">Eastern Time (ET)</SelectItem>
-                        <SelectItem value="ct">Central Time (CT)</SelectItem>
-                        <SelectItem value="mt">Mountain Time (MT)</SelectItem>
-                        <SelectItem value="pt">Pacific Time (PT)</SelectItem>
-                        <SelectItem value="jst">Japan Standard Time (JST)</SelectItem>
-                        <SelectItem value="cet">Central European Time (CET)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <Separator className="my-4" />
-                
-                <h3 className="text-md font-medium mb-2">Resource Management</h3>
-                
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <label htmlFor="autoScaling" className="text-sm font-medium">Auto-scaling</label>
-                    <p className="text-sm text-muted-foreground">Enable automatic scaling of resources</p>
-                  </div>
-                  <Switch id="autoScaling" defaultChecked />
-                </div>
-
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <label htmlFor="costOptimization" className="text-sm font-medium">Cost Optimization</label>
-                    <p className="text-sm text-muted-foreground">Automatically optimize for cost</p>
-                  </div>
-                  <Switch id="costOptimization" defaultChecked />
-                </div>
-                
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <label htmlFor="resourceReservation" className="text-sm font-medium">Resource Reservation</label>
-                    <p className="text-sm text-muted-foreground">Pre-allocate resources for critical workloads</p>
-                  </div>
-                  <Switch id="resourceReservation" />
-                </div>
-                
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <label htmlFor="idleTimeout" className="text-sm font-medium">Idle Resource Timeout</label>
-                    <p className="text-sm text-muted-foreground">Automatically release idle resources</p>
-                  </div>
-                  <Select defaultValue="30">
-                    <SelectTrigger id="idleTimeout" className="w-32">
-                      <SelectValue placeholder="Select timeout" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="10">10 minutes</SelectItem>
-                      <SelectItem value="30">30 minutes</SelectItem>
-                      <SelectItem value="60">1 hour</SelectItem>
-                      <SelectItem value="120">2 hours</SelectItem>
-                      <SelectItem value="never">Never</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="grid gap-2">
-                  <label htmlFor="budget" className="text-sm font-medium">Monthly Budget Alert ($)</label>
-                  <Input id="budget" type="number" defaultValue="5000" />
-                </div>
-                
-                <Separator className="my-4" />
-                
-                <h3 className="text-md font-medium mb-2">User Interface</h3>
-                
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <label htmlFor="welcomeScreen" className="text-sm font-medium">Show Welcome Screen</label>
-                    <p className="text-sm text-muted-foreground">Display welcome guide on startup</p>
-                  </div>
-                  <Switch id="welcomeScreen" defaultChecked />
-                </div>
-                
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <label htmlFor="tutorialTips" className="text-sm font-medium">Show Tutorial Tips</label>
-                    <p className="text-sm text-muted-foreground">Display helpful tips for new users</p>
-                  </div>
-                  <Switch id="tutorialTips" defaultChecked />
-                </div>
-                
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <label htmlFor="showDeprecated" className="text-sm font-medium">Show Deprecated Features</label>
-                    <p className="text-sm text-muted-foreground">Display features that will be removed in future versions</p>
-                  </div>
-                  <Switch 
-                    id="showDeprecated" 
-                    checked={showDeprecated}
-                    onCheckedChange={setShowDeprecated}
-                  />
-                </div>
-                
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Saving..." : "Save Settings"}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-          
-          {advancedMode && (
+          {/* General Settings */}
+          <TabsContent value="general">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Database className="mr-2 h-5 w-5" />
-                  Data Management
-                </CardTitle>
+                <CardTitle>General Settings</CardTitle>
                 <CardDescription>
-                  Configure data handling settings
+                  Manage your basic platform configuration and preferences.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <label htmlFor="dataCompression" className="text-sm font-medium">Data Compression</label>
-                    <p className="text-sm text-muted-foreground">Compress data for storage</p>
-                  </div>
-                  <Switch id="dataCompression" defaultChecked />
-                </div>
-                
-                <div className="flex items-center justify-between rounded-lg border p-4">
-                  <div className="space-y-0.5">
-                    <label htmlFor="autoBackup" className="text-sm font-medium">Automatic Backups</label>
-                    <p className="text-sm text-muted-foreground">Regularly backup your data</p>
-                  </div>
-                  <Switch id="autoBackup" defaultChecked />
-                </div>
-                
-                <div className="grid gap-2">
-                  <label htmlFor="backupFrequency" className="text-sm font-medium">Backup Frequency</label>
-                  <Select defaultValue="daily">
-                    <SelectTrigger id="backupFrequency">
-                      <SelectValue placeholder="Select frequency" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="hourly">Every hour</SelectItem>
-                      <SelectItem value="daily">Daily</SelectItem>
-                      <SelectItem value="weekly">Weekly</SelectItem>
-                      <SelectItem value="monthly">Monthly</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="grid gap-2">
-                  <label htmlFor="dataRetentionPeriod" className="text-sm font-medium">Data Retention Period</label>
-                  <Select defaultValue="90">
-                    <SelectTrigger id="dataRetentionPeriod">
-                      <SelectValue placeholder="Select period" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="30">30 days</SelectItem>
-                      <SelectItem value="60">60 days</SelectItem>
-                      <SelectItem value="90">90 days</SelectItem>
-                      <SelectItem value="180">180 days</SelectItem>
-                      <SelectItem value="365">1 year</SelectItem>
-                      <SelectItem value="forever">Forever</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <Button variant="outline" className="w-full">
-                  Schedule Data Cleanup
-                </Button>
+              <CardContent className="space-y-6">
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="siteName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Platform Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Enter your platform name" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            This is the name displayed in the browser tab and emails.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="language"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Language</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select language" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="en-US">English (US)</SelectItem>
+                                <SelectItem value="en-GB">English (UK)</SelectItem>
+                                <SelectItem value="fr-FR">French</SelectItem>
+                                <SelectItem value="de-DE">German</SelectItem>
+                                <SelectItem value="ja-JP">Japanese</SelectItem>
+                                <SelectItem value="zh-CN">Chinese (Simplified)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>
+                              Your preferred language for the interface.
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="timezone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Timezone</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select timezone" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="UTC">UTC (Coordinated Universal Time)</SelectItem>
+                                <SelectItem value="America/New_York">Eastern Time (ET)</SelectItem>
+                                <SelectItem value="America/Chicago">Central Time (CT)</SelectItem>
+                                <SelectItem value="America/Denver">Mountain Time (MT)</SelectItem>
+                                <SelectItem value="America/Los_Angeles">Pacific Time (PT)</SelectItem>
+                                <SelectItem value="Europe/London">London (GMT)</SelectItem>
+                                <SelectItem value="Europe/Paris">Central European (CET)</SelectItem>
+                                <SelectItem value="Asia/Tokyo">Japan (JST)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>
+                              All dates and times will be displayed in this timezone.
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={form.control}
+                      name="dateFormat"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Date Format</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select date format" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="MMM DD, YYYY">MMM DD, YYYY (Jan 01, 2023)</SelectItem>
+                              <SelectItem value="DD/MM/YYYY">DD/MM/YYYY (01/01/2023)</SelectItem>
+                              <SelectItem value="MM/DD/YYYY">MM/DD/YYYY (01/01/2023)</SelectItem>
+                              <SelectItem value="YYYY-MM-DD">YYYY-MM-DD (2023-01-01)</SelectItem>
+                              <SelectItem value="DD.MM.YYYY">DD.MM.YYYY (01.01.2023)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            How dates will be displayed throughout the platform.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">Resource Management</h3>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <Label>Storage Usage</Label>
+                            <p className="text-sm text-muted-foreground">
+                              {quotaUsage}% of 100GB used
+                            </p>
+                          </div>
+                          <Button variant="outline" size="sm">Manage Storage</Button>
+                        </div>
+                        <Progress value={quotaUsage} className="h-2" />
+                      </div>
+                    </div>
+
+                    {advancedMode && (
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-medium">Advanced Settings</h3>
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="debug-mode" />
+                            <Label htmlFor="debug-mode">Enable Debug Mode</Label>
+                          </div>
+                          <p className="text-sm text-muted-foreground ml-6">
+                            Enables detailed logging for troubleshooting issues.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <Button type="submit">Save Changes</Button>
+                  </form>
+                </Form>
               </CardContent>
             </Card>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="api" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Webhook className="mr-2 h-5 w-5" />
-                API Keys
-              </CardTitle>
-              <CardDescription>
-                Manage API keys for accessing the Elastic GPU platform
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              
-              <div className="rounded-md bg-muted p-4">
-                <p className="text-sm font-medium">Your API Key</p>
-                <div className="mt-2 flex items-center gap-2">
-                  <Input type="password" value="sk-••••••••••••••••••••••••••••••" readOnly />
-                  <Button variant="outline" size="sm">Show</Button>
-                  <Button variant="outline" size="sm">Copy</Button>
-                </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Last used: 2 hours ago
-                </p>
-              </div>
-              
-              <Separator />
-              
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium">API Access Control</h3>
-                <div className="grid gap-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">IP Address Restrictions</p>
-                      <p className="text-sm text-muted-foreground">Limit API access to specific IP addresses</p>
-                    </div>
-                    <Switch />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Rate Limiting</p>
-                      <p className="text-sm text-muted-foreground">Set a maximum number of requests per minute</p>
-                    </div>
-                    <Select defaultValue="200">
-                      <SelectTrigger className="w-24">
-                        <SelectValue placeholder="Limit" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="50">50</SelectItem>
-                        <SelectItem value="100">100</SelectItem>
-                        <SelectItem value="200">200</SelectItem>
-                        <SelectItem value="500">500</SelectItem>
-                        <SelectItem value="1000">1000</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-              
-              
-              <Separator />
-              
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium">API Key Permissions</h3>
-                <div className="grid gap-3">
-                  <div className="flex items-start space-x-3">
-                    <Checkbox id="read-access" defaultChecked />
-                    <div>
-                      <label htmlFor="read-access" className="text-sm font-medium">Read Access</label>
-                      <p className="text-xs text-muted-foreground">Allows reading data from the API</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start space-x-3">
-                    <Checkbox id="write-access" defaultChecked />
-                    <div>
-                      <label htmlFor="write-access" className="text-sm font-medium">Write Access</label>
-                      <p className="text-xs text-muted-foreground">Allows creating and updating data via the API</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start space-x-3">
-                    <Checkbox id="delete-access" />
-                    <div>
-                      <label htmlFor="delete-access" className="text-sm font-medium">Delete Access</label>
-                      <p className="text-xs text-muted-foreground">Allows deleting data via the API</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start space-x-3">
-                    <Checkbox id="admin-access" />
-                    <div>
-                      <label htmlFor="admin-access" className="text-sm font-medium">Admin Access</label>
-                      <p className="text-xs text-muted-foreground">Full administrative access to all API endpoints</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <Separator />
-              
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium mb-2">API Usage Limits</h3>
-                
+          </TabsContent>
+          
+          {/* API Access Settings */}
+          <TabsContent value="api">
+            <Card>
+              <CardHeader>
+                <CardTitle>API Access</CardTitle>
+                <CardDescription>
+                  Manage API keys and configure API settings for external integrations.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
                 <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <label htmlFor="rate-limit" className="text-sm font-medium">Rate Limit (requests per minute)</label>
-                      <span className="text-sm text-muted-foreground">200 rpm</span>
-                    </div>
-                    <Slider defaultValue={[200]} min={10} max={1000} step={10} />
-                  </div>
-                  
-                  <div>
-                    <div className="flex justify-between mb-1">
-                      <label htmlFor="concurrent-requests" className="text-sm font-medium">Max Concurrent Requests</label>
-                      <span className="text-sm text-muted-foreground">50</span>
-                    </div>
-                    <Slider defaultValue={[50]} min={5} max={200} step={5} />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-3 mt-4">
-                <h3 className="text-sm font-medium">API Webhooks</h3>
-                
-                <div className="border rounded-lg p-4 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <h4 className="text-sm font-medium">Job Completion Webhook</h4>
-                    <Switch id="job-webhook" defaultChecked />
-                  </div>
-                  <Input placeholder="https://your-server.com/webhooks/job-completed" />
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="include-logs" />
-                    <label htmlFor="include-logs" className="text-sm">Include logs in payload</label>
-                  </div>
-                </div>
-                
-                <div className="border rounded-lg p-4 space-y-3">
-                  <div className="flex justify-between items-center">
-                    <h4 className="text-sm font-medium">Error Alert Webhook</h4>
-                    <Switch id="error-webhook" defaultChecked />
-                  </div>
-                  <Input placeholder="https://your-server.com/webhooks/error-alert" />
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="include-stacktrace" />
-                    <label htmlFor="include-stacktrace" className="text-sm">Include stack trace in payload</label>
-                  </div>
-                </div>
-                
-                <Button variant="outline" size="sm" className="mt-2">
-                  <Webhook className="h-4 w-4 mr-2" /> Add New Webhook
-                </Button>
-              </div>
-              
-              <Button variant="outline">Generate New API Key</Button>
-              
-              {advancedMode && (
-                <div className="mt-4 pt-4 border-t">
-                  <h3 className="text-sm font-medium mb-3">Advanced API Settings</h3>
-                  
-                  <div className="space-y-3">
-                    <div className="grid gap-2">
-                      <label htmlFor="timeout" className="text-sm font-medium">Request Timeout (seconds)</label>
-                      <Input id="timeout" type="number" defaultValue="30" />
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <label htmlFor="retry-attempts" className="text-sm font-medium">Max Retry Attempts</label>
-                      <Input id="retry-attempts" type="number" defaultValue="3" />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium">JSON Pretty Print</p>
-                        <p className="text-xs text-muted-foreground">Format JSON responses for readability</p>
+                  <h3 className="text-lg font-medium">API Keys</h3>
+                  <div className="rounded-md border">
+                    <div className="p-4 bg-muted/50">
+                      <div className="grid grid-cols-4 text-sm font-medium">
+                        <div>Name</div>
+                        <div>Key</div>
+                        <div>Created</div>
+                        <div className="text-right">Actions</div>
                       </div>
-                      <Switch id="json-pretty" />
                     </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="notifications" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Bell className="mr-2 h-5 w-5" />
-                Notification Settings
-              </CardTitle>
-              <CardDescription>
-                Configure how you receive notifications
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <label className="text-sm font-medium">Job Completion</label>
-                  <p className="text-sm text-muted-foreground">Notify when a job completes</p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <label className="text-sm font-medium">Job Failure</label>
-                  <p className="text-sm text-muted-foreground">Notify when a job fails</p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <label className="text-sm font-medium">Resource Usage</label>
-                  <p className="text-sm text-muted-foreground">Notify on high resource usage</p>
-                </div>
-                <Switch defaultChecked />
-              </div>
-              
-              
-              <Separator className="my-4" />
-              
-              <h3 className="text-sm font-medium mb-3">Notification Channels</h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">Email Notifications</p>
-                    <Input className="mt-1 w-64" placeholder="Enter email address" defaultValue="admin@elastic-gpu.com" />
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">Slack Notifications</p>
-                    <p className="text-xs text-muted-foreground">Connect your Slack workspace</p>
-                  </div>
-                  <Button variant="outline" size="sm">Connect Slack</Button>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">Mobile Push Notifications</p>
-                    <p className="text-xs text-muted-foreground">Receive alerts on your mobile device</p>
-                  </div>
-                  <Switch />
-                </div>
-              </div>
-              
-              
-              <Separator className="my-4" />
-              
-              <h3 className="text-sm font-medium mb-3">Notification Types</h3>
-              
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Job Completion</label>
-                    <p className="text-sm text-muted-foreground">Notify when a job completes</p>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        All channels <Bell className="ml-2 h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem className="flex items-center">
-                        <Checkbox id="job-email" defaultChecked className="mr-2" />
-                        <label htmlFor="job-email">Email</label>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="flex items-center">
-                        <Checkbox id="job-slack" defaultChecked className="mr-2" />
-                        <label htmlFor="job-slack">Slack</label>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="flex items-center">
-                        <Checkbox id="job-push" className="mr-2" />
-                        <label htmlFor="job-push">Push</label>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Job Failure</label>
-                    <p className="text-sm text-muted-foreground">Notify when a job fails</p>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        All channels <Bell className="ml-2 h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem className="flex items-center">
-                        <Checkbox id="failure-email" defaultChecked className="mr-2" />
-                        <label htmlFor="failure-email">Email</label>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="flex items-center">
-                        <Checkbox id="failure-slack" defaultChecked className="mr-2" />
-                        <label htmlFor="failure-slack">Slack</label>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="flex items-center">
-                        <Checkbox id="failure-push" defaultChecked className="mr-2" />
-                        <label htmlFor="failure-push">Push</label>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Resource Usage</label>
-                    <p className="text-sm text-muted-foreground">Notify on high resource usage</p>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        All channels <Bell className="ml-2 h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem className="flex items-center">
-                        <Checkbox id="resource-email" defaultChecked className="mr-2" />
-                        <label htmlFor="resource-email">Email</label>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="flex items-center">
-                        <Checkbox id="resource-slack" defaultChecked className="mr-2" />
-                        <label htmlFor="resource-slack">Slack</label>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="flex items-center">
-                        <Checkbox id="resource-push" className="mr-2" />
-                        <label htmlFor="resource-push">Push</label>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Security Alerts</label>
-                    <p className="text-sm text-muted-foreground">Notify about security-related events</p>
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        All channels <Bell className="ml-2 h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem className="flex items-center">
-                        <Checkbox id="security-email" defaultChecked className="mr-2" />
-                        <label htmlFor="security-email">Email</label>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="flex items-center">
-                        <Checkbox id="security-slack" defaultChecked className="mr-2" />
-                        <label htmlFor="security-slack">Slack</label>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="flex items-center">
-                        <Checkbox id="security-push" defaultChecked className="mr-2" />
-                        <label htmlFor="security-push">Push</label>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-              
-              <Separator className="my-4" />
-              
-              <h3 className="text-sm font-medium mb-3">Notification Schedule</h3>
-              
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Quiet Hours</label>
-                    <p className="text-sm text-muted-foreground">Silence non-critical notifications</p>
-                  </div>
-                  <Switch id="quiet-hours" />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <label htmlFor="quiet-start" className="text-sm font-medium">Start Time</label>
-                    <Select defaultValue="22:00">
-                      <SelectTrigger id="quiet-start">
-                        <SelectValue placeholder="Select time" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="20:00">8:00 PM</SelectItem>
-                        <SelectItem value="21:00">9:00 PM</SelectItem>
-                        <SelectItem value="22:00">10:00 PM</SelectItem>
-                        <SelectItem value="23:00">11:00 PM</SelectItem>
-                        <SelectItem value="00:00">12:00 AM</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <label htmlFor="quiet-end" className="text-sm font-medium">End Time</label>
-                    <Select defaultValue="07:00">
-                      <SelectTrigger id="quiet-end">
-                        <SelectValue placeholder="Select time" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="05:00">5:00 AM</SelectItem>
-                        <SelectItem value="06:00">6:00 AM</SelectItem>
-                        <SelectItem value="07:00">7:00 AM</SelectItem>
-                        <SelectItem value="08:00">8:00 AM</SelectItem>
-                        <SelectItem value="09:00">9:00 AM</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Active Days</label>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="flex-1">Mon</Button>
-                    <Button variant="outline" size="sm" className="flex-1">Tue</Button>
-                    <Button variant="outline" size="sm" className="flex-1">Wed</Button>
-                    <Button variant="outline" size="sm" className="flex-1">Thu</Button>
-                    <Button variant="outline" size="sm" className="flex-1">Fri</Button>
-                    <Button variant="secondary" size="sm" className="flex-1">Sat</Button>
-                    <Button variant="secondary" size="sm" className="flex-1">Sun</Button>
-                  </div>
-                </div>
-              </div>
-              
-              {advancedMode && (
-                <>
-                  <Separator className="my-4" />
-                  
-                  <h3 className="text-sm font-medium mb-3">Summary Reports</h3>
-                  
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <label className="text-sm font-medium">Daily Summary</label>
-                        <p className="text-sm text-muted-foreground">Receive a daily summary of all activities</p>
-                      </div>
-                      <Switch defaultChecked />
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <label className="text-sm font-medium">Weekly Report</label>
-                        <p className="text-sm text-muted-foreground">Receive a weekly summary with analytics</p>
-                      </div>
-                      <Switch defaultChecked />
-                    </div>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="security" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Shield className="mr-2 h-5 w-5" />
-                Security Settings
-              </CardTitle>
-              <CardDescription>
-                Configure security options for your environment
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Two-Factor Authentication</label>
-                    <p className="text-sm text-muted-foreground">Require 2FA for all users</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">IP Restrictions</label>
-                    <p className="text-sm text-muted-foreground">Limit access to specific IP ranges</p>
-                  </div>
-                  <Switch />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Access Logs</label>
-                    <p className="text-sm text-muted-foreground">Record all access attempts</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                
-                <Separator className="my-4" />
-                
-                <h3 className="text-sm font-medium mb-2">Password Policy</h3>
-                
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <label className="text-sm font-medium">Minimum Password Length</label>
-                    </div>
-                    <Select defaultValue="12">
-                      <SelectTrigger className="w-20">
-                        <SelectValue placeholder="Length" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="8">8</SelectItem>
-                        <SelectItem value="10">10</SelectItem>
-                        <SelectItem value="12">12</SelectItem>
-                        <SelectItem value="14">14</SelectItem>
-                        <SelectItem value="16">16</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <label className="text-sm font-medium">Require Special Characters</label>
-                    </div>
-                    <Switch defaultChecked />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <label className="text-sm font-medium">Password Expiration</label>
-                    </div>
-                    <Select defaultValue="90">
-                      <SelectTrigger className="w-32">
-                        <SelectValue placeholder="Days" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="30">30 days</SelectItem>
-                        <SelectItem value="60">60 days</SelectItem>
-                        <SelectItem value="90">90 days</SelectItem>
-                        <SelectItem value="180">180 days</SelectItem>
-                        <SelectItem value="never">Never</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                <Separator className="my-4" />
-                
-                <h3 className="text-sm font-medium mb-2">Session Management</h3>
-                
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <label className="text-sm font-medium">Session Timeout</label>
-                      <p className="text-sm text-muted-foreground">Automatically log out inactive users</p>
-                    </div>
-                    <Select defaultValue="30">
-                      <SelectTrigger className="w-32">
-                        <SelectValue placeholder="Minutes" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="15">15 minutes</SelectItem>
-                        <SelectItem value="30">30 minutes</SelectItem>
-                        <SelectItem value="60">1 hour</SelectItem>
-                        <SelectItem value="120">2 hours</SelectItem>
-                        <SelectItem value="never">Never</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <label className="text-sm font-medium">Max Concurrent Sessions</label>
-                      <p className="text-sm text-muted-foreground">Maximum number of active sessions per user</p>
-                    </div>
-                    <Select defaultValue="3">
-                      <SelectTrigger className="w-20">
-                        <SelectValue placeholder="Count" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1</SelectItem>
-                        <SelectItem value="2">2</SelectItem>
-                        <SelectItem value="3">3</SelectItem>
-                        <SelectItem value="5">5</SelectItem>
-                        <SelectItem value="unlimited">Unlimited</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                {advancedMode && (
-                  <>
-                    <Separator className="my-4" />
-                    
-                    <h3 className="text-sm font-medium mb-2">Advanced Security</h3>
-                    
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <label className="text-sm font-medium">Data Encryption</label>
-                          <p className="text-sm text-muted-foreground">Encrypt sensitive data at rest</p>
+                    <div className="divide-y">
+                      {apiKeys.map((apiKey) => (
+                        <div key={apiKey.id} className="grid grid-cols-4 p-4 text-sm items-center">
+                          <div className="flex items-center gap-2">
+                            {apiKey.name}
+                            {!apiKey.active && (
+                              <Badge variant="outline" className="text-xs">Revoked</Badge>
+                            )}
+                          </div>
+                          <div className="font-mono text-xs">
+                            {apiKey.key.substring(0, 14)}...
+                          </div>
+                          <div className="text-muted-foreground">{apiKey.created}</div>
+                          <div className="flex justify-end gap-2">
+                            <Button variant="outline" size="sm" disabled={!apiKey.active}>
+                              Copy
+                            </Button>
+                            {apiKey.active && (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => revokeApiKey(apiKey.id)}
+                              >
+                                Revoke
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                        <Switch defaultChecked />
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <label className="text-sm font-medium">VPC Isolation</label>
-                          <p className="text-sm text-muted-foreground">Run resources in isolated VPC</p>
-                        </div>
-                        <Switch defaultChecked />
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <label className="text-sm font-medium">Audit Logs</label>
-                          <p className="text-sm text-muted-foreground">Record all system changes</p>
-                        </div>
-                        <Switch defaultChecked />
-                      </div>
+                      ))}
                     </div>
-                  </>
-                )}
-                
-                <div className="pt-4">
-                  <Button variant="outline" className="w-full">
-                    <Lock className="mr-2 h-4 w-4" /> Run Security Audit
-                  </Button>
+                  </div>
+                  <Button onClick={createNewApiKey}>Generate New API Key</Button>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="appearance" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <MoonStar className="mr-2 h-5 w-5" />
-                Appearance Settings
-              </CardTitle>
-              <CardDescription>
-                Customize the look and feel of your interface
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">Theme</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Button variant="outline" className="justify-start">
-                      <Sun className="mr-2 h-4 w-4" /> Light
-                    </Button>
-                    <Button variant="outline" className="justify-start">
-                      <Moon className="mr-2 h-4 w-4" /> Dark
-                    </Button>
-                    <Button variant="outline" className="justify-start">
-                      <Laptop className="mr-2 h-4 w-4" /> System
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium">Color Scheme</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Button variant="outline" className="justify-start">
-                      <div className="mr-2 h-4 w-4 rounded-full bg-blue-500"></div> Blue
-                    </Button>
-                    <Button variant="outline" className="justify-start">
-                      <div className="mr-2 h-4 w-4 rounded-full bg-purple-500"></div> Purple
-                    </Button>
-                    <Button variant="outline" className="justify-start">
-                      <div className="mr-2 h-4 w-4 rounded-full bg-green-500"></div> Green
-                    </Button>
-                  </div>
-                </div>
-                
-                <Separator className="my-4" />
-                
-                <h3 className="text-sm font-medium mb-2">Layout</h3>
-                
-                <RadioGroup defaultValue="default">
-                  <div className="flex items-start space-x-3">
-                    <RadioGroupItem value="default" id="layout-default" />
-                    <div>
-                      <Label htmlFor="layout-default">Default Layout</Label>
-                      <p className="text-sm text-muted-foreground">Standard layout with sidebar navigation</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <RadioGroupItem value="compact" id="layout-compact" />
-                    <div>
-                      <Label htmlFor="layout-compact">Compact Layout</Label>
-                      <p className="text-sm text-muted-foreground">Condensed layout with icon-only sidebar</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <RadioGroupItem value="expanded" id="layout-expanded" />
-                    <div>
-                      <Label htmlFor="layout-expanded">Expanded Layout</Label>
-                      <p className="text-sm text-muted-foreground">Wider layout with detailed navigation</p>
-                    </div>
-                  </div>
-                </RadioGroup>
-                
-                <Separator className="my-4" />
-                
-                <h3 className="text-sm font-medium mb-2">Font Settings</h3>
-                
-                <div className="space-y-3">
-                  <div className="grid gap-2">
-                    <label className="text-sm font-medium">Font Size</label>
-                    <Select defaultValue="medium">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select font size" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="small">Small</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="large">Large</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="grid gap-2">
-                    <label className="text-sm font-medium">Font Family</label>
-                    <Select defaultValue="inter">
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select font family" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="inter">Inter</SelectItem>
-                        <SelectItem value="roboto">Roboto</SelectItem>
-                        <SelectItem value="opensans">Open Sans</SelectItem>
-                        <SelectItem value="system">System Default</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                
-                {advancedMode && (
-                  <>
-                    <Separator className="my-4" />
-                    
-                    <h3 className="text-sm font-medium mb-2">Advanced Appearance</h3>
-                    
-                    <div className="space-y-3">
-                      <div className="grid gap-2">
-                        <label className="text-sm font-medium">Animation Speed</label>
-                        <Select defaultValue="normal">
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select animation speed" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="slow">Slow</SelectItem>
-                            <SelectItem value="normal">Normal</SelectItem>
-                            <SelectItem value="fast">Fast</SelectItem>
-                            <SelectItem value="off">Disabled</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <label className="text-sm font-medium">Reduced Motion</label>
-                          <p className="text-sm text-muted-foreground">Minimize animations for accessibility</p>
-                        </div>
-                        <Switch />
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
-                          <label className="text-sm font-medium">High Contrast Mode</label>
-                          <p className="text-sm text-muted-foreground">Increase contrast for better visibility</p>
-                        </div>
-                        <Switch />
-                      </div>
-                    </div>
-                  </>
-                )}
-                
-                <div className="pt-4">
-                  <Button className="w-full">
-                    Save Appearance Settings
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="integrations" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Plug className="mr-2 h-5 w-5" />
-                Integrations
-              </CardTitle>
-              <CardDescription>
-                Connect with external tools and services
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-blue-100 p-2 rounded-lg">
-                      <svg className="h-6 w-6 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.5-2.6067-1.4997v-2.9997z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium">Slack</h4>
-                      <p className="text-sm text-muted-foreground">Connect your Slack workspace</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm">Connect</Button>
-                </div>
-                
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-blue-100 p-2 rounded-lg">
-                      <svg className="h-6 w-6 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zm2.5 16.5h-5v-2h5v2zm0-3.5h-5v-2h5v2zm0-3.5h-5v-2h5v2z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium">Jira</h4>
-                      <p className="text-sm text-muted-foreground">Connect your Jira account</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="text-green-600 bg-green-50">Connected</Badge>
-                    <Button variant="ghost" size="sm">Configure</Button>
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-gray-100 p-2 rounded-lg">
-                      <svg className="h-6 w-6 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.09.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.917.678 1.846 0 1.332-.012 2.407-.012 2.734 0 .267.18.577.688.48C19.138 20.161 22 16.416 22 12c0-5.523-4.477-10-10-10z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium">GitHub</h4>
-                      <p className="text-sm text-muted-foreground">Connect your GitHub repositories</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm">Connect</Button>
-                </div>
-                
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-blue-100 p-2 rounded-lg">
-                      <svg className="h-6 w-6 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,10.5A1.5,1.5 0 0,1 13.5,12A1.5,1.5 0 0,1 12,13.5A1.5,1.5 0 0,1 10.5,12A1.5,1.5 0 0,1 12,10.5M7.5,10.5A1.5,1.5 0 0,1 9,12A1.5,1.5 0 0,1 7.5,13.5A1.5,1.5 0 0,1 6,12A1.5,1.5 0 0,1 7.5,10.5M16.5,10.5A1.5,1.5 0 0,1 18,12A1.5,1.5 0 0,1 16.5,13.5A1.5,1.5 0 0,1 15,12A1.5,1.5 0 0,1 16.5,10.5Z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium">Discord</h4>
-                      <p className="text-sm text-muted-foreground">Connect your Discord server</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm">Connect</Button>
-                </div>
-                
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="bg-green-100 p-2 rounded-lg">
-                      <svg className="h-6 w-6 text-green-600" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M14.259 15.553h2.733L17.386 18h2.149L15.656 6.7h-2.282L9.507 18h2.136l.414-2.448h4.202zm-3.577-2.057L12.259 8.6l1.285 4.896h-1.862zM16.5 3h5.29L20.5 5h-4v.026L9.5 5v12.974L8.706 21H3.713L5 19h12.5V3z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium">Datadog</h4>
-                      <p className="text-sm text-muted-foreground">Connect your Datadog account for monitoring</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" size="sm">Connect</Button>
-                </div>
-              </div>
-              
-              {advancedMode && (
-                <div className="pt-4 mt-4 border-t">
-                  <h3 className="text-sm font-medium mb-3">Custom Integrations</h3>
-                  
-                  <div className="space-y-4">
-                    <div className="grid gap-2">
-                      <label className="text-sm font-medium">Webhook URL</label>
-                      <Input placeholder="https://your-service.com/webhook" />
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <label className="text-sm font-medium">Authentication Token</label>
-                      <Input type="password" placeholder="Enter authentication token" />
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <label className="text-sm font-medium">Events</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="flex items-center space-x-2">
-                          <Checkbox id="job_started" />
-                          <label htmlFor="job_started" className="text-sm">Job Started</label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox id="job_completed" defaultChecked />
-                          <label htmlFor="job_completed" className="text-sm">Job Completed</label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox id="job_failed" defaultChecked />
-                          <label htmlFor="job_failed" className="text-sm">Job Failed</label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox id="resource_limit" defaultChecked />
-                          <label htmlFor="resource_limit" className="text-sm">Resource Limit</label>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <Button variant="outline" className="w-full">
-                      <Webhook className="mr-2 h-4 w-4" /> Add Custom Integration
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="permissions" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <UserCog className="mr-2 h-5 w-5" />
-                Permission Settings
-              </CardTitle>
-              <CardDescription>
-                Manage user roles and permissions
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between border rounded-lg p-4">
-                  <div>
-                    <h4 className="text-sm font-medium">Administrator</h4>
-                    <p className="text-sm text-muted-foreground">Full access to all features</p>
-                  </div>
-                  <Button variant="outline" size="sm">Edit Permissions</Button>
-                </div>
-                
-                <div className="flex items-center justify-between border rounded-lg p-4">
-                  <div>
-                    <h4 className="text-sm font-medium">Developer</h4>
-                    <p className="text-sm text-muted-foreground">Can create and manage jobs</p>
-                  </div>
-                  <Button variant="outline" size="sm">Edit Permissions</Button>
-                </div>
-                
-                <div className="flex items-center justify-between border rounded-lg p-4">
-                  <div>
-                    <h4 className="text-sm font-medium">Analyst</h4>
-                    <p className="text-sm text-muted-foreground">View-only access to results and analytics</p>
-                  </div>
-                  <Button variant="outline" size="sm">Edit Permissions</Button>
-                </div>
-                
-                <div className="flex items-center justify-between border rounded-lg p-4">
-                  <div>
-                    <h4 className="text-sm font-medium">Viewer</h4>
-                    <p className="text-sm text-muted-foreground">Limited view-only access</p>
-                  </div>
-                  <Button variant="outline" size="sm">Edit Permissions</Button>
-                </div>
-              </div>
-              
-              <Separator className="my-4" />
-              
-              <h3 className="text-sm font-medium mb-3">Resource Access</h3>
-              
-              <div className="space-y-3">
-                <div className="grid grid-cols-4 gap-4">
-                  <div className="col-span-2">
-                    <label className="text-sm font-medium">Resource</label>
-                  </div>
-                  <div className="text-center">
-                    <label className="text-sm font-medium">View</label>
-                  </div>
-                  <div className="text-center">
-                    <label className="text-sm font-medium">Modify</label>
-                  </div>
-                </div>
-                
+
                 <Separator />
-                
-                <div className="grid grid-cols-4 gap-4 items-center">
-                  <div className="col-span-2">
-                    <p className="text-sm">Training Jobs</p>
-                  </div>
-                  <div className="text-center">
-                    <Checkbox defaultChecked />
-                  </div>
-                  <div className="text-center">
-                    <Checkbox defaultChecked />
-                  </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">API Settings</h3>
+                  <Form {...apiForm}>
+                    <form className="space-y-4">
+                      <FormField
+                        control={apiForm.control}
+                        name="rateLimit"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Rate Limit (requests per minute)</FormLabel>
+                            <FormControl>
+                              <div className="space-y-2">
+                                <Slider
+                                  min={10}
+                                  max={1000}
+                                  step={10}
+                                  defaultValue={[field.value]}
+                                  onValueChange={(values) => field.onChange(values[0])}
+                                />
+                                <div className="flex justify-between">
+                                  <span className="text-sm">10</span>
+                                  <span className="text-sm font-medium">{field.value}</span>
+                                  <span className="text-sm">1000</span>
+                                </div>
+                              </div>
+                            </FormControl>
+                            <FormDescription>
+                              Maximum number of API requests allowed per minute.
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                          control={apiForm.control}
+                          name="timeout"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Request Timeout (seconds)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  max={60}
+                                  {...field}
+                                  onChange={(e) => field.onChange(Number(e.target.value))}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Maximum time in seconds before an API request times out.
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={apiForm.control}
+                          name="retries"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Max Retries</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  max={5}
+                                  {...field}
+                                  onChange={(e) => field.onChange(Number(e.target.value))}
+                                />
+                              </FormControl>
+                              <FormDescription>
+                                Number of times to retry failed API requests.
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      {advancedMode && (
+                        <div className="space-y-4">
+                          <h4 className="text-md font-medium">Advanced API Settings</h4>
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="cors-all" />
+                              <Label htmlFor="cors-all">Allow all origins (CORS)</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="cache-responses" />
+                              <Label htmlFor="cache-responses">Cache API responses</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox id="rate-limit-ip" />
+                              <Label htmlFor="rate-limit-ip">Enable per-IP rate limiting</Label>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <Button type="submit">Save API Settings</Button>
+                    </form>
+                  </Form>
                 </div>
-                
-                <div className="grid grid-cols-4 gap-4 items-center">
-                  <div className="col-span-2">
-                    <p className="text-sm">Inference Endpoints</p>
-                  </div>
-                  <div className="text-center">
-                    <Checkbox defaultChecked />
-                  </div>
-                  <div className="text-center">
-                    <Checkbox defaultChecked />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-4 gap-4 items-center">
-                  <div className="col-span-2">
-                    <p className="text-sm">GPU Resources</p>
-                  </div>
-                  <div className="text-center">
-                    <Checkbox defaultChecked />
-                  </div>
-                  <div className="text-center">
-                    <Checkbox />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-4 gap-4 items-center">
-                  <div className="col-span-2">
-                    <p className="text-sm">Billing Information</p>
-                  </div>
-                  <div className="text-center">
-                    <Checkbox />
-                  </div>
-                  <div className="text-center">
-                    <Checkbox />
-                  </div>
-                </div>
-              </div>
-              
-              {advancedMode && (
-                <>
-                  <Separator className="my-4" />
-                  
-                  <h3 className="text-sm font-medium mb-3">Custom Role Creation</h3>
-                  
-                  <div className="space-y-3">
-                    <div className="grid gap-2">
-                      <label className="text-sm font-medium">Role Name</label>
-                      <Input placeholder="Enter role name" />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* Notifications Settings */}
+          <TabsContent value="notifications">
+            <Card>
+              <CardHeader>
+                <CardTitle>Notification Preferences</CardTitle>
+                <CardDescription>
+                  Configure how and when you receive notifications about system events.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Delivery Methods</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Bell size={16} />
+                        <Label htmlFor="email-notifications">Email Notifications</Label>
+                      </div>
+                      <Switch 
+                        id="email-notifications" 
+                        checked={notifications.email} 
+                        onCheckedChange={() => toggleNotification('email')}
+                      />
                     </div>
-                    
-                    <div className="grid gap-2">
-                      <label className="text-sm font-medium">Role Description</label>
-                      <Textarea placeholder="Describe the role's purpose and permissions" />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Bell size={16} />
+                        <Label htmlFor="push-notifications">Push Notifications</Label>
+                      </div>
+                      <Switch 
+                        id="push-notifications" 
+                        checked={notifications.push} 
+                        onCheckedChange={() => toggleNotification('push')}
+                      />
                     </div>
-                    
-                    <div className="grid gap-2">
-                      <label className="text-sm font-medium">Base Role</label>
-                      <Select defaultValue="developer">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a base role" />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Bell size={16} />
+                        <Label htmlFor="sms-notifications">SMS Notifications</Label>
+                      </div>
+                      <Switch 
+                        id="sms-notifications" 
+                        checked={notifications.sms} 
+                        onCheckedChange={() => toggleNotification('sms')}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Bell size={16} />
+                        <Label htmlFor="in-app-notifications">In-App Notifications</Label>
+                      </div>
+                      <Switch 
+                        id="in-app-notifications" 
+                        checked={notifications.inApp} 
+                        onCheckedChange={() => toggleNotification('inApp')}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Event Types</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <ShieldAlert size={16} className="text-destructive" />
+                        <Label htmlFor="critical-alerts">Critical System Alerts</Label>
+                      </div>
+                      <Switch 
+                        id="critical-alerts" 
+                        checked={notifications.alertCritical} 
+                        onCheckedChange={() => toggleNotification('alertCritical')}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <CalendarClock size={16} />
+                        <Label htmlFor="daily-reports">Daily Reports</Label>
+                      </div>
+                      <Switch 
+                        id="daily-reports" 
+                        checked={notifications.dailyReport} 
+                        onCheckedChange={() => toggleNotification('dailyReport')}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <CalendarClock size={16} />
+                        <Label htmlFor="weekly-digest">Weekly Digest</Label>
+                      </div>
+                      <Switch 
+                        id="weekly-digest" 
+                        checked={notifications.weeklyDigest} 
+                        onCheckedChange={() => toggleNotification('weeklyDigest')}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <TimerReset size={16} />
+                        <Label htmlFor="maintenance-alerts">Maintenance Alerts</Label>
+                      </div>
+                      <Switch 
+                        id="maintenance-alerts" 
+                        checked={notifications.maintenanceAlerts} 
+                        onCheckedChange={() => toggleNotification('maintenanceAlerts')}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <LineChart size={16} />
+                        <Label htmlFor="usage-alerts">Resource Usage Alerts</Label>
+                      </div>
+                      <Switch 
+                        id="usage-alerts" 
+                        checked={notifications.usageAlerts} 
+                        onCheckedChange={() => toggleNotification('usageAlerts')}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Quiet Hours</h3>
+                  <p className="text-sm text-muted-foreground">
+                    During quiet hours, only critical notifications will be delivered.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="quiet-start">Start Time</Label>
+                      <Select defaultValue="22:00">
+                        <SelectTrigger id="quiet-start">
+                          <SelectValue placeholder="Start time" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="administrator">Administrator</SelectItem>
-                          <SelectItem value="developer">Developer</SelectItem>
-                          <SelectItem value="analyst">Analyst</SelectItem>
-                          <SelectItem value="viewer">Viewer</SelectItem>
-                          <SelectItem value="custom">Custom (No Base)</SelectItem>
+                          {Array.from({ length: 24 }, (_, i) => (
+                            <SelectItem key={i} value={`${i.toString().padStart(2, '0')}:00`}>
+                              {`${i.toString().padStart(2, '0')}:00`}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    
-                    <Button variant="outline" className="w-full">
-                      <UserCog className="mr-2 h-4 w-4" /> Create Custom Role
+                    <div className="space-y-2">
+                      <Label htmlFor="quiet-end">End Time</Label>
+                      <Select defaultValue="07:00">
+                        <SelectTrigger id="quiet-end">
+                          <SelectValue placeholder="End time" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 24 }, (_, i) => (
+                            <SelectItem key={i} value={`${i.toString().padStart(2, '0')}:00`}>
+                              {`${i.toString().padStart(2, '0')}:00`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                <Button type="button">Save Notification Settings</Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* Security Settings */}
+          <TabsContent value="security">
+            <Card>
+              <CardHeader>
+                <CardTitle>Security Settings</CardTitle>
+                <CardDescription>
+                  Configure security features and authentication options.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Account Security</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label htmlFor="2fa">Two-Factor Authentication</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Add an extra layer of security to your account.
+                        </p>
+                      </div>
+                      <Switch id="2fa" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label htmlFor="session-timeout">Automatic Session Timeout</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Automatically log out after period of inactivity.
+                        </p>
+                      </div>
+                      <Switch id="session-timeout" defaultChecked />
+                    </div>
+                  </div>
+                  <div className="pt-2">
+                    <Button variant="outline" size="sm">
+                      <KeyRound size={16} className="mr-2" />
+                      Change Password
                     </Button>
                   </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="advanced" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Cpu className="mr-2 h-5 w-5" />
-                Advanced Settings
-              </CardTitle>
-              <CardDescription>
-                Configure advanced system settings
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium mb-2">Compute Settings</h3>
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Default GPU Architecture</label>
-                    <p className="text-sm text-muted-foreground">Select the default GPU architecture for new jobs</p>
-                  </div>
-                  <Select defaultValue="ampere">
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Architecture" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="volta">Volta</SelectItem>
-                      <SelectItem value="turing">Turing</SelectItem>
-                      <SelectItem value="ampere">Ampere</SelectItem>
-                      <SelectItem value="hopper">Hopper</SelectItem>
-                      <SelectItem value="ada">Ada Lovelace</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">CUDA Version</label>
-                    <p className="text-sm text-muted-foreground">Select the default CUDA version</p>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Access Control</h3>
+                  <div className="space-y-2">
+                    <Label htmlFor="ip-whitelist">IP Whitelist</Label>
+                    <Textarea
+                      id="ip-whitelist"
+                      placeholder="Enter IP addresses (one per line)"
+                      className="font-mono"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Leave empty to allow access from any IP address.
+                    </p>
                   </div>
-                  <Select defaultValue="11.8">
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Version" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="10.2">CUDA 10.2</SelectItem>
-                      <SelectItem value="11.4">CUDA 11.4</SelectItem>
-                      <SelectItem value="11.8">CUDA 11.8</SelectItem>
-                      <SelectItem value="12.0">CUDA 12.0</SelectItem>
-                      <SelectItem value="12.1">CUDA 12.1</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Memory Allocation</label>
-                    <p className="text-sm text-muted-foreground">Configure GPU memory allocation strategy</p>
-                  </div>
-                  <Select defaultValue="dynamic">
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Allocation" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="dynamic">Dynamic</SelectItem>
-                      <SelectItem value="static">Static</SelectItem>
-                      <SelectItem value="growth">Growth</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <Separator className="my-4" />
-                
-                <h3 className="text-sm font-medium mb-2">Network Settings</h3>
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">HTTP Proxy</label>
-                    <p className="text-sm text-muted-foreground">Configure HTTP proxy settings</p>
-                  </div>
-                  <div className="w-40">
-                    <Input placeholder="proxy:port" />
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Network Interface</label>
-                    <p className="text-sm text-muted-foreground">Select the primary network interface</p>
-                  </div>
-                  <Select defaultValue="auto">
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Interface" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="auto">Auto-detect</SelectItem>
-                      <SelectItem value="eth0">eth0</SelectItem>
-                      <SelectItem value="eth1">eth1</SelectItem>
-                      <SelectItem value="wlan0">wlan0</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Network Bandwidth Limit</label>
-                    <p className="text-sm text-muted-foreground">Limit bandwidth usage per job</p>
-                  </div>
-                  <Select defaultValue="none">
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Limit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No Limit</SelectItem>
-                      <SelectItem value="100m">100 Mbps</SelectItem>
-                      <SelectItem value="1g">1 Gbps</SelectItem>
-                      <SelectItem value="10g">10 Gbps</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <Separator className="my-4" />
-                
-                <h3 className="text-sm font-medium mb-2">System Management</h3>
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Log Level</label>
-                    <p className="text-sm text-muted-foreground">Configure system logging verbosity</p>
-                  </div>
-                  <Select defaultValue="info">
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Log Level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="debug">Debug</SelectItem>
-                      <SelectItem value="info">Info</SelectItem>
-                      <SelectItem value="warn">Warning</SelectItem>
-                      <SelectItem value="error">Error</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">Log Retention</label>
-                    <p className="text-sm text-muted-foreground">How long to keep system logs</p>
-                  </div>
-                  <Select defaultValue="30d">
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Retention" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="7d">7 days</SelectItem>
-                      <SelectItem value="30d">30 days</SelectItem>
-                      <SelectItem value="90d">90 days</SelectItem>
-                      <SelectItem value="365d">1 year</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <label className="text-sm font-medium">System Metrics</label>
-                    <p className="text-sm text-muted-foreground">Collect detailed system metrics</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                
-                <Separator className="my-4" />
-                
-                <h3 className="text-sm font-medium mb-2">Maintenance</h3>
-                
-                <div className="flex justify-between space-x-4">
-                  <Button variant="outline" className="flex-1">
-                    <History className="mr-2 h-4 w-4" /> System Cleanup
-                  </Button>
                   
-                  <Button variant="outline" className="flex-1">
-                    <Database className="mr-2 h-4 w-4" /> Reset Cache
-                  </Button>
-                  
-                  <Button variant="outline" className="flex-1">
-                    <Cpu className="mr-2 h-4 w-4" /> Reset Configs
-                  </Button>
+                  {advancedMode && (
+                    <div className="space-y-2 pt-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="enforce-mfa" />
+                        <Label htmlFor="enforce-mfa">Enforce MFA for all users</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="single-session" />
+                        <Label htmlFor="single-session">Restrict to one active session per user</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="password-history" />
+                        <Label htmlFor="password-history">Prevent reuse of previous passwords</Label>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <div className="flex flex-col space-y-2 w-full">
-                <Button variant="destructive" className="w-full">
-                  Reset All Settings to Default
-                </Button>
-                <p className="text-xs text-muted-foreground text-center">
-                  This action cannot be undone. Please backup your settings first.
-                </p>
-              </div>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-      </Tabs>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Security Audit Log</h3>
+                  <div className="rounded-md border overflow-hidden">
+                    <div className="overflow-y-auto max-h-[200px]">
+                      <table className="min-w-full">
+                        <thead className="bg-muted/50">
+                          <tr>
+                            <th className="py-2 px-4 text-left text-sm font-medium">Action</th>
+                            <th className="py-2 px-4 text-left text-sm font-medium">User</th>
+                            <th className="py-2 px-4 text-left text-sm font-medium">Timestamp</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y">
+                          {logs.map(log => (
+                            <tr key={log.id}>
+                              <td className="py-2 px-4 text-sm">{log.action}</td>
+                              <td className="py-2 px-4 text-sm">{log.user}</td>
+                              <td className="py-2 px-4 text-sm">{log.timestamp}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <Button variant="outline">View Full Audit Log</Button>
+                </div>
+
+                <Button type="button">Save Security Settings</Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* Appearance Settings */}
+          <TabsContent value="appearance">
+            <Card>
+              <CardHeader>
+                <CardTitle>Appearance Settings</CardTitle>
+                <CardDescription>
+                  Customize the look and feel of your interface.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Theme</h3>
+                  <RadioGroup defaultValue="system">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="flex items-center space-x-2 border rounded-lg p-4">
+                        <RadioGroupItem value="light" id="theme-light" />
+                        <Label htmlFor="theme-light">Light</Label>
+                      </div>
+                      <div className="flex items-center space-x-2 border rounded-lg p-4">
+                        <RadioGroupItem value="dark" id="theme-dark" />
+                        <Label htmlFor="theme-dark">Dark</Label>
+                      </div>
+                      <div className="flex items-center space-x-2 border rounded-lg p-4">
+                        <RadioGroupItem value="system" id="theme-system" />
+                        <Label htmlFor="theme-system">System Default</Label>
+                      </div>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Layout Density</h3>
+                  <RadioGroup defaultValue="comfortable">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="flex items-center space-x-2 border rounded-lg p-4">
+                        <RadioGroupItem value="compact" id="density-compact" />
+                        <Label htmlFor="density-compact">Compact</Label>
+                      </div>
+                      <div className="flex items-center space-x-2 border rounded-lg p-4">
+                        <RadioGroupItem value="comfortable" id="density-comfortable" />
+                        <Label htmlFor="density-comfortable">Comfortable</Label>
+                      </div>
+                      <div className="flex items-center space-x-2 border rounded-lg p-4">
+                        <RadioGroupItem value="spacious" id="density-spacious" />
+                        <Label htmlFor="density-spacious">Spacious</Label>
+                      </div>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Dashboard Layout</h3>
+                  <RadioGroup defaultValue="default">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="border rounded-lg p-4">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <RadioGroupItem value="default" id="layout-default" />
+                          <Label htmlFor="layout-default">Default</Label>
+                        </div>
+                        <div className="h-20 bg-muted rounded-md"></div>
+                      </div>
+                      <div className="border rounded-lg p-4">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <RadioGroupItem value="compact" id="layout-compact" />
+                          <Label htmlFor="layout-compact">Compact</Label>
+                        </div>
+                        <div className="h-20 bg-muted rounded-md"></div>
+                      </div>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                {advancedMode && (
+                  <>
+                    <Separator />
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">Custom Theme</h3>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="primary-color">Primary Color</Label>
+                          <Input id="primary-color" type="color" value="#9b87f5" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="secondary-color">Secondary Color</Label>
+                          <Input id="secondary-color" type="color" value="#7E69AB" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="accent-color">Accent Color</Label>
+                          <Input id="accent-color" type="color" value="#6E59A5" />
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="save-theme" />
+                        <Label htmlFor="save-theme">Save as custom theme</Label>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <Button type="button">Save Appearance Settings</Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* Integrations Settings */}
+          <TabsContent value="integrations">
+            <Card>
+              <CardHeader>
+                <CardTitle>Integrations</CardTitle>
+                <CardDescription>
+                  Connect with third-party services and tools.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-medium">Connected Services</h3>
+                </div>
+
+                <div className="space-y-4">
+                  {/* GitHub Integration */}
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                          <Code size={24} />
+                        </div>
+                        <div>
+                          <h4 className="font-medium">GitHub</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Connect to your repositories
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm">Connect</Button>
+                    </div>
+                  </div>
+
+                  {/* AWS Integration */}
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                          <Cloud size={24} />
+                        </div>
+                        <div>
+                          <h4 className="font-medium">AWS</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Infrastructure integration
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm">Connect</Button>
+                    </div>
+                  </div>
+
+                  {/* Slack Integration */}
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                          <Bell size={24} />
+                        </div>
+                        <div>
+                          <h4 className="font-medium">Slack</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Notifications and alerts
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm">Connect</Button>
+                    </div>
+                  </div>
+
+                  {/* Prometheus Integration */}
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                          <LineChart size={24} />
+                        </div>
+                        <div>
+                          <h4 className="font-medium">Prometheus</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Metrics and monitoring
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm">Connect</Button>
+                    </div>
+                  </div>
+
+                  {/* Docker Registry Integration */}
+                  <div className="border rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                          <Database size={24} />
+                        </div>
+                        <div>
+                          <h4 className="font-medium">Docker Registry</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Container repository integration
+                          </p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm">Connect</Button>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">API Webhooks</h3>
+                  <div className="border rounded-lg p-4">
+                    <div className="space-y-4">
+                      <div>
+                        <Label htmlFor="webhook-url">Webhook URL</Label>
+                        <Input
+                          id="webhook-url"
+                          placeholder="https://api.example.com/webhook"
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="webhook-events">Events</Label>
+                        <div className="mt-1 space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="event-job-complete" />
+                            <Label htmlFor="event-job-complete">Job Completed</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="event-job-failed" />
+                            <Label htmlFor="event-job-failed">Job Failed</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="event-resource-limit" />
+                            <Label htmlFor="event-resource-limit">Resource Limit Reached</Label>
+                          </div>
+                        </div>
+                      </div>
+                      <Button>Add Webhook</Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* Permissions Settings */}
+          <TabsContent value="permissions">
+            <Card>
+              <CardHeader>
+                <CardTitle>Permissions</CardTitle>
+                <CardDescription>
+                  Manage user roles and access controls.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">User Roles</h3>
+                  <div className="rounded-md border">
+                    <div className="p-4 bg-muted/50">
+                      <div className="grid grid-cols-3 text-sm font-medium">
+                        <div>Role</div>
+                        <div>Description</div>
+                        <div className="text-right">Actions</div>
+                      </div>
+                    </div>
+                    <div className="divide-y">
+                      <div className="grid grid-cols-3 p-4 text-sm items-center">
+                        <div className="font-medium">Administrator</div>
+                        <div className="text-muted-foreground">Full system access</div>
+                        <div className="text-right">
+                          <Button variant="ghost" size="sm">Edit</Button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 p-4 text-sm items-center">
+                        <div className="font-medium">Manager</div>
+                        <div className="text-muted-foreground">Can manage jobs and resources</div>
+                        <div className="text-right">
+                          <Button variant="ghost" size="sm">Edit</Button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 p-4 text-sm items-center">
+                        <div className="font-medium">Developer</div>
+                        <div className="text-muted-foreground">Can submit and view jobs</div>
+                        <div className="text-right">
+                          <Button variant="ghost" size="sm">Edit</Button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 p-4 text-sm items-center">
+                        <div className="font-medium">Viewer</div>
+                        <div className="text-muted-foreground">Read-only access</div>
+                        <div className="text-right">
+                          <Button variant="ghost" size="sm">Edit</Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <Button variant="outline">Create New Role</Button>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Feature Access</h3>
+                  <div className="rounded-md border">
+                    <div className="p-4 bg-muted/50">
+                      <div className="grid grid-cols-4 text-sm font-medium">
+                        <div>Feature</div>
+                        <div>Admin</div>
+                        <div>Manager</div>
+                        <div>Developer</div>
+                      </div>
+                    </div>
+                    <div className="divide-y">
+                      <div className="grid grid-cols-4 p-4 text-sm items-center">
+                        <div>Training Job Submission</div>
+                        <div><Checkbox checked disabled /></div>
+                        <div><Checkbox checked disabled /></div>
+                        <div><Checkbox checked disabled /></div>
+                      </div>
+                      <div className="grid grid-cols-4 p-4 text-sm items-center">
+                        <div>Resource Management</div>
+                        <div><Checkbox checked disabled /></div>
+                        <div><Checkbox checked disabled /></div>
+                        <div><Checkbox disabled /></div>
+                      </div>
+                      <div className="grid grid-cols-4 p-4 text-sm items-center">
+                        <div>User Management</div>
+                        <div><Checkbox checked disabled /></div>
+                        <div><Checkbox disabled /></div>
+                        <div><Checkbox disabled /></div>
+                      </div>
+                      <div className="grid grid-cols-4 p-4 text-sm items-center">
+                        <div>System Settings</div>
+                        <div><Checkbox checked disabled /></div>
+                        <div><Checkbox disabled /></div>
+                        <div><Checkbox disabled /></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* Advanced Settings */}
+          <TabsContent value="advanced">
+            <Card>
+              <CardHeader>
+                <CardTitle>Advanced Settings</CardTitle>
+                <CardDescription>
+                  Configure technical settings for your platform.
+                </CardDescription>
+                <Badge variant="destructive" className="w-fit">Admin Only</Badge>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">System Configuration</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="max-memory">Maximum Memory Allocation (GB)</Label>
+                      <Input
+                        id="max-memory"
+                        type="number"
+                        defaultValue="16"
+                        min="1"
+                        max="128"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="max-storage">Maximum Storage Allocation (GB)</Label>
+                      <Input
+                        id="max-storage"
+                        type="number"
+                        defaultValue="100"
+                        min="1"
+                        max="1000"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="job-timeout">Default Job Timeout (minutes)</Label>
+                      <Input
+                        id="job-timeout"
+                        type="number"
+                        defaultValue="60"
+                        min="1"
+                        max="1440"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="max-concurrent-jobs">Maximum Concurrent Jobs</Label>
+                      <Input
+                        id="max-concurrent-jobs"
+                        type="number"
+                        defaultValue="10"
+                        min="1"
+                        max="100"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Network Configuration</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="network-proxy">HTTP Proxy</Label>
+                      <Input
+                        id="network-proxy"
+                        placeholder="http://proxy.example.com:8080"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="no-proxy">No Proxy</Label>
+                      <Input
+                        id="no-proxy"
+                        placeholder="localhost,127.0.0.1,.local"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2 pt-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="network-isolation" />
+                      <Label htmlFor="network-isolation">Enable Network Isolation</Label>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Logging Configuration</h3>
+                  <div className="space-y-2">
+                    <Label htmlFor="log-level">Log Level</Label>
+                    <Select defaultValue="info">
+                      <SelectTrigger id="log-level">
+                        <SelectValue placeholder="Select log level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="debug">Debug</SelectItem>
+                        <SelectItem value="info">Info</SelectItem>
+                        <SelectItem value="warn">Warning</SelectItem>
+                        <SelectItem value="error">Error</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="log-retention">Log Retention Period (days)</Label>
+                    <Input
+                      id="log-retention"
+                      type="number"
+                      defaultValue="30"
+                      min="1"
+                      max="365"
+                    />
+                  </div>
+                  <div className="space-y-2 pt-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="enable-audit-logs" checked />
+                      <Label htmlFor="enable-audit-logs">Enable Audit Logs</Label>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Maintenance</h3>
+                  <div className="space-y-4">
+                    <Button variant="outline">
+                      <History size={16} className="mr-2" />
+                      Backup System
+                    </Button>
+                    <Button variant="outline">
+                      <FileJson size={16} className="mr-2" />
+                      Export Configuration
+                    </Button>
+                    <Button variant="destructive">
+                      <WifiOff size={16} className="mr-2" />
+                      Maintenance Mode
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
     </DashboardLayout>
   );
 };
 
 export default Settings;
-
-function Sun({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2" />
-      <path d="M12 20v2" />
-      <path d="m4.93 4.93 1.41 1.41" />
-      <path d="m17.66 17.66 1.41 1.41" />
-      <path d="M2 12h2" />
-      <path d="M20 12h2" />
-      <path d="m6.34 17.66-1.41 1.41" />
-      <path d="m19.07 4.93-1.41 1.41" />
-    </svg>
-  );
-}
-
-function Moon({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M12 3a6.364 6.364 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-    </svg>
-  );
-}
-
-function Laptop({ className }: { className?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16" />
-    </svg>
-  );
-}
-
-function Badge({ className, variant, children }: { className?: string; variant?: "outline" | "destructive"; children?: React.ReactNode }) {
-  const baseClasses = "inline-flex items-center rounded px-2 py-0.5 text-xs font-medium";
-  
-  const variants = {
-    outline: "border border-gray-300 text-gray-700",
-    destructive: "bg-red-100 text-red-800",
-  };
-  
-  const variantClass = variant && variants[variant] ? variants[variant] : "";
-  
-  return (
-    <span className={`${baseClasses} ${variantClass} ${className || ""}`}>
-      {children}
-    </span>
-  );
-}
-
