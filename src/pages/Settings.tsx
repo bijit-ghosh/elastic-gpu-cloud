@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -836,5 +837,396 @@ const Settings = () => {
                           <RadioGroupItem value="default" id="layout-default" />
                           <Label htmlFor="layout-default">Default</Label>
                         </div>
-                        <div className="h-20 bg-muted
-"
+                        <div className="h-20 bg-muted"></div>
+                      </div>
+                      <div className="border rounded-lg p-4">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <RadioGroupItem value="compact" id="layout-compact" />
+                          <Label htmlFor="layout-compact">Compact</Label>
+                        </div>
+                        <div className="h-20 bg-muted"></div>
+                      </div>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                <Button type="button">Save Appearance Settings</Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="integrations">
+            <Card>
+              <CardHeader>
+                <CardTitle>Integrations</CardTitle>
+                <CardDescription>
+                  Connect external tools and services to enhance your workflow.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Connected Services</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="border rounded-lg p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-primary/10 p-2 rounded-md">
+                          <Cloud size={20} className="text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">AWS</p>
+                          <p className="text-sm text-muted-foreground">Connected</p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm">Configure</Button>
+                    </div>
+                    <div className="border rounded-lg p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-primary/10 p-2 rounded-md">
+                          <Database size={20} className="text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">PostgreSQL</p>
+                          <p className="text-sm text-muted-foreground">Connected</p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm">Configure</Button>
+                    </div>
+                    <div className="border rounded-lg p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-muted p-2 rounded-md">
+                          <Cpu size={20} />
+                        </div>
+                        <div>
+                          <p className="font-medium">Google Cloud</p>
+                          <p className="text-sm text-muted-foreground">Not connected</p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm">Connect</Button>
+                    </div>
+                    <div className="border rounded-lg p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-muted p-2 rounded-md">
+                          <Network size={20} />
+                        </div>
+                        <div>
+                          <p className="font-medium">Slack</p>
+                          <p className="text-sm text-muted-foreground">Not connected</p>
+                        </div>
+                      </div>
+                      <Button variant="outline" size="sm">Connect</Button>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Integration Marketplace</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="border rounded-lg p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Webhook size={18} />
+                          <span className="font-medium">Webhooks</span>
+                        </div>
+                        <Badge>Popular</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Send automated notifications to external services.
+                      </p>
+                      <Button variant="outline" size="sm" className="w-full">Add Integration</Button>
+                    </div>
+                    <div className="border rounded-lg p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Wifi size={18} />
+                          <span className="font-medium">API Client</span>
+                        </div>
+                        <Badge>New</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Connect to third-party APIs and services.
+                      </p>
+                      <Button variant="outline" size="sm" className="w-full">Add Integration</Button>
+                    </div>
+                    <div className="border rounded-lg p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <FileJson size={18} />
+                          <span className="font-medium">Data Export</span>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Export data in various formats (CSV, JSON).
+                      </p>
+                      <Button variant="outline" size="sm" className="w-full">Add Integration</Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="permissions">
+            <Card>
+              <CardHeader>
+                <CardTitle>User Permissions</CardTitle>
+                <CardDescription>
+                  Manage access control and user roles.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Role Management</h3>
+                    <Button variant="outline" size="sm">
+                      <UserCog size={16} className="mr-2" />
+                      Add Role
+                    </Button>
+                  </div>
+                  <div className="rounded-md border">
+                    <div className="p-4 bg-muted/50">
+                      <div className="grid grid-cols-4 text-sm font-medium">
+                        <div>Role</div>
+                        <div>Description</div>
+                        <div>Users</div>
+                        <div className="text-right">Actions</div>
+                      </div>
+                    </div>
+                    <div className="divide-y">
+                      <div className="grid grid-cols-4 p-4 text-sm items-center">
+                        <div className="font-medium">Administrator</div>
+                        <div className="text-muted-foreground">Full system access</div>
+                        <div>2</div>
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="sm">
+                            Edit
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-4 p-4 text-sm items-center">
+                        <div className="font-medium">Editor</div>
+                        <div className="text-muted-foreground">Can edit but not delete</div>
+                        <div>5</div>
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="sm">
+                            Edit
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-4 p-4 text-sm items-center">
+                        <div className="font-medium">Viewer</div>
+                        <div className="text-muted-foreground">Read-only access</div>
+                        <div>10</div>
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="sm">
+                            Edit
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-medium">Permission Controls</h3>
+                    <Button variant="outline" size="sm">
+                      Save Changes
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div className="border rounded-md p-4">
+                      <h4 className="font-medium mb-2">Dashboard Access</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox id="perm-view-dashboard" defaultChecked />
+                          <Label htmlFor="perm-view-dashboard">View Dashboard</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox id="perm-edit-dashboard" />
+                          <Label htmlFor="perm-edit-dashboard">Modify Dashboard</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox id="perm-share-dashboard" />
+                          <Label htmlFor="perm-share-dashboard">Share Dashboard</Label>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="border rounded-md p-4">
+                      <h4 className="font-medium mb-2">User Management</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox id="perm-view-users" defaultChecked />
+                          <Label htmlFor="perm-view-users">View Users</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox id="perm-add-users" />
+                          <Label htmlFor="perm-add-users">Add Users</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox id="perm-remove-users" />
+                          <Label htmlFor="perm-remove-users">Remove Users</Label>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {advancedMode && (
+                      <div className="border rounded-md p-4">
+                        <h4 className="font-medium mb-2">Advanced Controls</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="perm-system-config" />
+                            <Label htmlFor="perm-system-config">System Configuration</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="perm-api-access" />
+                            <Label htmlFor="perm-api-access">API Management</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox id="perm-audit-logs" />
+                            <Label htmlFor="perm-audit-logs">Access Audit Logs</Label>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="advanced">
+            <Card>
+              <CardHeader>
+                <CardTitle>Advanced Settings</CardTitle>
+                <CardDescription>
+                  Configure advanced system settings and developer options.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">System Configuration</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="cache-ttl">Cache TTL (minutes)</Label>
+                      <Input id="cache-ttl" type="number" defaultValue="60" />
+                      <p className="text-sm text-muted-foreground">
+                        How long to cache responses before refreshing.
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="max-batch-size">Max Batch Size</Label>
+                      <Input id="max-batch-size" type="number" defaultValue="1000" />
+                      <p className="text-sm text-muted-foreground">
+                        Maximum number of items to process in a single batch.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox id="enable-beta-features" />
+                    <div>
+                      <Label htmlFor="enable-beta-features">Enable Beta Features</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Access experimental features that are still in development.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <Separator />
+                
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Developer Options</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="log-level">Log Level</Label>
+                      <Select defaultValue="info">
+                        <SelectTrigger id="log-level">
+                          <SelectValue placeholder="Select log level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="debug">Debug</SelectItem>
+                          <SelectItem value="info">Info</SelectItem>
+                          <SelectItem value="warn">Warning</SelectItem>
+                          <SelectItem value="error">Error</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="debug-mode">Debug Mode</Label>
+                      <Select defaultValue="off">
+                        <SelectTrigger id="debug-mode">
+                          <SelectValue placeholder="Select debug mode" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="off">Off</SelectItem>
+                          <SelectItem value="console">Console Only</SelectItem>
+                          <SelectItem value="verbose">Verbose</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox id="enable-dev-tools" />
+                    <div>
+                      <Label htmlFor="enable-dev-tools">Enable Developer Tools</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Show additional developer tools in the interface.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <Separator />
+                
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Danger Zone</h3>
+                  <div className="border border-destructive/20 rounded-md p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium">Reset Configuration</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Reset all settings to their default values.
+                        </p>
+                      </div>
+                      <Button variant="destructive" size="sm">Reset</Button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium">Purge Cache</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Clear all cached data from the system.
+                        </p>
+                      </div>
+                      <Button variant="destructive" size="sm">Purge</Button>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium">Export All Data</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Export all system data for backup purposes.
+                        </p>
+                      </div>
+                      <Button variant="outline" size="sm">Export</Button>
+                    </div>
+                  </div>
+                </div>
+                
+                <Button type="button">Save Advanced Settings</Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </DashboardLayout>
+  );
+};
+
+export default Settings;
