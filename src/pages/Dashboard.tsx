@@ -13,6 +13,7 @@ import CostChart from '@/components/dashboard/CostChart';
 import AlertPanel from '@/components/dashboard/AlertPanel';
 import ResourceUtilizationPanel from '@/components/dashboard/ResourceUtilizationPanel';
 import NodeHealthTable from '@/components/dashboard/NodeHealthTable';
+import InfrastructureOverview from '@/components/dashboard/InfrastructureOverview';
 
 const Dashboard = () => {
   return (
@@ -130,6 +131,10 @@ const Dashboard = () => {
             <CostChart />
           </CardContent>
         </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 mb-6">
+        <InfrastructureOverview />
       </div>
 
       <div className="grid grid-cols-1 gap-6 mb-6">
