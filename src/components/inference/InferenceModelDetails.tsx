@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +5,7 @@ import {
   Activity, 
   Server, 
   Cpu, 
-  Memory, 
+  HardDrive, 
   Clock, 
   Gauge, 
   ArrowRight, 
@@ -58,7 +57,6 @@ export const InferenceModelDetails: React.FC<InferenceModelDetailsProps> = ({ en
     });
   };
 
-  // Mock data for the endpoint details
   const metrics = {
     requestRate: '152 req/min',
     errorRate: '0.02%',
@@ -148,7 +146,7 @@ export const InferenceModelDetails: React.FC<InferenceModelDetailsProps> = ({ en
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center mb-4">
-              <Memory className="h-5 w-5 mr-2 text-green-500" />
+              <HardDrive className="h-5 w-5 mr-2 text-green-500" />
               <h3 className="font-medium">Model</h3>
             </div>
             <div className="grid grid-cols-2 gap-2 text-sm">
@@ -368,7 +366,7 @@ export const InferenceModelDetails: React.FC<InferenceModelDetailsProps> = ({ en
                 <div className="bg-muted/30 p-4 rounded-md">
                   <div className="flex justify-between items-center mb-2">
                     <div className="flex items-center">
-                      <Memory className="h-4 w-4 mr-2 text-blue-500" />
+                      <HardDrive className="h-4 w-4 mr-2 text-blue-500" />
                       <span className="text-muted-foreground">Response Caching</span>
                     </div>
                     <Badge variant="outline" className={configuration.cachingEnabled ? "bg-green-100" : ""}>
