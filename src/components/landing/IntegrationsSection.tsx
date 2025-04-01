@@ -173,7 +173,7 @@ const integrations = [
   {
     name: 'Vertex AI',
     category: 'ML Platform',
-    description: 'Google Cloud's unified ML platform.',
+    description: "Google Cloud's unified ML platform.",
     docsUrl: 'https://cloud.google.com/vertex-ai/docs',
   },
   {
