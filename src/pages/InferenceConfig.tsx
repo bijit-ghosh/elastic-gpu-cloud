@@ -4,10 +4,12 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { CloudLightning, Monitor, Activity, BarChart2, Cpu, RefreshCw } from 'lucide-react';
+import { CloudLightning, Monitor, Activity, BarChart2, Cpu, RefreshCw, Plus, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InferenceModelDetails } from '@/components/inference/InferenceModelDetails';
+import { CreateEndpointForm } from '@/components/inference/CreateEndpointForm';
+import { DeploymentHistory } from '@/components/inference/DeploymentHistory';
 import { toast } from '@/hooks/use-toast';
 
 // Mock data for inference endpoints
