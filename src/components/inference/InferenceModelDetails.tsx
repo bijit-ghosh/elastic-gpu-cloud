@@ -11,11 +11,22 @@ import {
   ArrowRight, 
   Settings, 
   Code,
-  AlertTriangle
+  AlertTriangle,
+  Thermometer
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend
+} from 'recharts';
 
 interface Endpoint {
   id: string;
@@ -82,6 +93,28 @@ export const InferenceModelDetails: React.FC<InferenceModelDetailsProps> = ({ en
     autoscalingMax: 5,
     cachingEnabled: true,
   };
+
+  const temperatureData = [
+    { name: 'GPU 0', value: 68 },
+    { name: 'GPU 1', value: 72 },
+    { name: 'GPU 2', value: 65 },
+  ];
+
+  const performanceHistoryData = [
+    { time: '12:00', latency: 210, throughput: 120, temperature: 65 },
+    { time: '12:10', latency: 215, throughput: 125, temperature: 67 },
+    { time: '12:20', latency: 205, throughput: 130, temperature: 66 },
+    { time: '12:30', latency: 220, throughput: 128, temperature: 68 },
+    { time: '12:40', latency: 230, throughput: 135, temperature: 70 },
+    { time: '12:50', latency: 225, throughput: 140, temperature: 71 },
+    { time: '13:00', latency: 215, throughput: 145, temperature: 69 },
+    { time: '13:10', latency: 210, throughput: 142, temperature: 67 },
+    { time: '13:20', latency: 200, throughput: 150, temperature: 66 },
+    { time: '13:30', latency: 190, throughput: 155, temperature: 65 },
+    { time: '13:40', latency: 195, throughput: 158, temperature: 67 },
+    { time: '13:50', latency: 205, throughput: 160, temperature: 68 },
+    { time: '14:00', latency: 200, throughput: 165, temperature: 67 },
+  ];
 
   return (
     <div className="space-y-6">
@@ -170,6 +203,7 @@ export const InferenceModelDetails: React.FC<InferenceModelDetailsProps> = ({ en
           <TabsTrigger value="configuration">Configuration</TabsTrigger>
           <TabsTrigger value="logs">Logs</TabsTrigger>
           <TabsTrigger value="apiUsage">API Usage</TabsTrigger>
+          <TabsTrigger value="temperature">Temperature</TabsTrigger>
         </TabsList>
 
         <TabsContent value="metrics" className="mt-4">
@@ -470,6 +504,116 @@ export const InferenceModelDetails: React.FC<InferenceModelDetailsProps> = ({ en
                     View full API documentation
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="temperature" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Thermometer className="mr-2 h-5 w-5 text-red-500" />
+                Temperature Monitoring
+              </CardTitle>
+              <CardDescription>
+                Real-time temperature data for GPU instances
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={performanceHistoryData}
+                      margin={{ top: 10, right: 30, left: 0, bottom: 10 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#555" opacity={0.1} />
+                      <XAxis dataKey="time" tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} />
+                      <Tooltip contentStyle={{ backgroundColor: 'rgba(0, 0, 0, 0.8)', borderRadius: '8px', border: 'none' }} />
+                      <Legend />
+                      <Line 
+                        type="monotone" 
+                        dataKey="temperature" 
+                        stroke="#ff5252" 
+                        strokeWidth={2} 
+                        dot={{ r: 3 }} 
+                        name="Temperature (°C)" 
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {temperatureData.map((item, index) => (
+                    <Card key={index}>
+                      <CardContent className="p-6">
+                        <div className="flex justify-between items-center mb-2">
+                          <h4 className="font-medium">{item.name}</h4>
+                          <Badge 
+                            className={
+                              item.value >= 75 ? "bg-red-100 text-red-800 dark:bg-red-900/60 dark:text-red-300" : 
+                              item.value >= 70 ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/60 dark:text-yellow-300" : 
+                              "bg-green-100 text-green-800 dark:bg-green-900/60 dark:text-green-300"
+                            }
+                          >
+                            {item.value >= 75 ? "Critical" : item.value >= 70 ? "Warning" : "Normal"}
+                          </Badge>
+                        </div>
+                        <div className="flex items-end gap-2">
+                          <span className="text-3xl font-bold">{item.value}°C</span>
+                          <span className="text-xs text-muted-foreground mb-1">
+                            {item.value < 70 ? "Within safe range" : "Approaching threshold"}
+                          </span>
+                        </div>
+                        <div className="mt-2">
+                          <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
+                            <div 
+                              className={
+                                item.value >= 75 ? "bg-red-500 h-2 rounded-full" : 
+                                item.value >= 70 ? "bg-yellow-500 h-2 rounded-full" : 
+                                "bg-green-500 h-2 rounded-full"
+                              } 
+                              style={{ width: `${(item.value / 100) * 100}%` }}
+                            ></div>
+                          </div>
+                          <div className="flex justify-between mt-1 text-xs text-muted-foreground">
+                            <span>0°C</span>
+                            <span>50°C</span>
+                            <span>100°C</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+                
+                <div className="bg-muted/30 p-4 rounded-md">
+                  <div className="flex items-start mb-2">
+                    <AlertTriangle className="h-5 w-5 text-yellow-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="font-medium">Temperature Thresholds</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Optimal operating range is between 30°C - 70°C. Sustained operation above 80°C may impact performance and hardware longevity.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 mt-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                      <span className="text-xs">Normal: &lt;70°C</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                      <span className="text-xs">Warning: 70°C - 75°C</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                      <span className="text-xs">Critical: &gt;75°C</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>
